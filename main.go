@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/rabellino12/gopher-microservices/routes/home"
-	"github.com/rabellino12/gopher-microservices/server"
+	"github.com/rabellino12/go-playground/routes/home"
+	"github.com/rabellino12/go-playground/server"
 )
 
 var (
