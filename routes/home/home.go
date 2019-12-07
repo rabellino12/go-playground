@@ -15,7 +15,7 @@ type Handlers struct {
 
 // Home is a handler funciton for home route "/"
 func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "plain/text")
+	w.Header().Set("Content-Type", "plain/text; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(message))
 }

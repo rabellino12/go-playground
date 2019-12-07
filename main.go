@@ -15,13 +15,21 @@ var (
 
 func main() {
 	logger := log.New(os.Stdout, "gophercon-tutorial", log.LstdFlags|log.Lshortfile)
+	logger.Println("server address", serverAddr)
 	homeHandler := home.NewHandlers(logger)
 	mux := http.NewServeMux()
 	homeHandler.SetupRoutes(mux)
-	srv := server.NewServer(mux, serverAddr)
+	srv := server.NewServer(mux, getServerAddress())
 
 	err := srv.ListenAndServe()
 	if err != nil {
-		log.Fatalf("Server failed to start: %v", err)
+		logger.Fatalf("Server failed to start: %v", err)
 	}
+}
+
+func getServerAddress() string {
+	if serverAddr != "" {
+		return "0.0.0.0:" + serverAddr
+	}
+	return "0.0.0.0:8080"
 }
