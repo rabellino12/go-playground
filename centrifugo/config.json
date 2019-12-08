@@ -1,0 +1,8 @@
+{
+    "secret": "some-centrifugo-secret-key",
+    "api_key": "some-centrifugo-api-key",
+    "address": "0.0.0.0",
+    "port": "8081",
+    "engine": "redis",
+    "redis_host": "redis"
+  }

@@ -9,7 +9,6 @@ USER mathias
 WORKDIR /gophercon/
 
 ADD . /gophercon/
-ENV SERVER_ADDRESS=8080
 RUN CGO_ENABLED=0 go build -o /gophercon/tutorial .
 
 FROM alpine:3.10

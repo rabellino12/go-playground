@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/rabellino12/go-playground/routes/home"
+	mongodb "github.com/rabellino12/go-playground/db"
+	"github.com/rabellino12/go-playground/routes"
 	"github.com/rabellino12/go-playground/server"
 )
 
@@ -16,15 +17,18 @@ var (
 func main() {
 	logger := log.New(os.Stdout, "gophercon-tutorial", log.LstdFlags|log.Lshortfile)
 	logger.Println("server address", serverAddr)
-	homeHandler := home.NewHandlers(logger)
 	mux := http.NewServeMux()
-	homeHandler.SetupRoutes(mux)
 	srv := server.NewServer(mux, getServerAddress())
-
 	err := srv.ListenAndServe()
 	if err != nil {
 		logger.Fatalf("Server failed to start: %v", err)
 	}
+}
+
+func initialize(mux *http.ServeMux, logger *log.Logger) {
+	client, _ := mongodb.SetupDB()
+	routes.SetRoutes(mux, logger, client)
+
 }
 
 func getServerAddress() string {
