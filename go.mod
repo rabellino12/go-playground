@@ -3,8 +3,14 @@ module github.com/rabellino12/go-playground
 go 1.13
 
 require (
+	github.com/centrifugal/centrifuge-go v0.2.3
+	github.com/centrifugal/gocent v2.0.2+incompatible
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-stack/stack v1.8.0 // indirect
+	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
+	github.com/gorilla/websocket v1.4.1 // indirect
+	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c // indirect
 	github.com/xdg/stringprep v1.0.0 // indirect
 	go.mongodb.org/mongo-driver v1.1.3

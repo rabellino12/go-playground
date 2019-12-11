@@ -6,6 +6,8 @@ import (
 	"os"
 
 	mongodb "github.com/rabellino12/go-playground/db"
+	"github.com/rabellino12/go-playground/ioclient"
+	"github.com/rabellino12/go-playground/ioclient/iohttp"
 	"github.com/rabellino12/go-playground/routes"
 	"github.com/rabellino12/go-playground/server"
 )
@@ -29,7 +31,8 @@ func main() {
 func initialize(mux *http.ServeMux, logger *log.Logger) {
 	client, _ := mongodb.SetupDB()
 	routes.SetRoutes(mux, logger, client)
-
+	iohttp.Init()
+	ioclient.Connect()
 }
 
 func getServerAddress() string {
