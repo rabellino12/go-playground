@@ -18,6 +18,7 @@ func main() {
 	logger := log.New(os.Stdout, "gophercon-tutorial", log.LstdFlags|log.Lshortfile)
 	logger.Println("server address", serverAddr)
 	mux := http.NewServeMux()
+	initialize(mux, logger)
 	srv := server.NewServer(mux, getServerAddress())
 	err := srv.ListenAndServe()
 	if err != nil {

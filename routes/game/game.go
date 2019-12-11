@@ -27,7 +27,7 @@ func (h *Handlers) gateway(w http.ResponseWriter, r *http.Request) {
 
 // get is a handler funciton for get single game route "/"
 func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
-	game := game.Game{Name: "gametest", Players: []string{"player1", "player2"}}
+	game := game.Body{Name: "gametest", Players: []string{"player1", "player2"}}
 
 	js, err := json.Marshal(game)
 	if err != nil {
@@ -40,15 +40,20 @@ func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
 
 //post is a handler function to insert new game
 func (h *Handlers) post(w http.ResponseWriter, r *http.Request) {
-	var game game.Game
+	var game game.Body
 
 	err := json.NewDecoder(r.Body).Decode(&game)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	h.gameHandler.Insert(game)
-	js, err := json.Marshal(game)
+	resGame, err := h.gameHandler.Insert(&game)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	js, err := json.Marshal(resGame)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -2,16 +2,25 @@ package game
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// Body is the game request body struct
+type Body struct {
+	Players []string `bson:"players" json:"players"`
+	Name    string   `bson:"name" json:"name"`
+}
+
 // Game is the game collection struct
 type Game struct {
-	Players []string `json:"players"`
-	Name    string   `json:"name"`
+	Body `bson:",inline"`
+	// ObjectId() or objectid.ObjectID is deprecated--use primitive instead
+	ID primitive.ObjectID `bson:"_id, omitempty" json:"_id"`
 }
 
 // Handler is the Game collection handler
@@ -26,21 +35,40 @@ func (h *Handler) getCollection() *mongo.Collection {
 
 // Get returns a game from the database
 func (h *Handler) Get(gameID string) (Game, error) {
-	players := []string{"player1", "player2"}
-	return Game{Players: players}, nil
+	collection := h.getCollection()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	id, err := primitive.ObjectIDFromHex(gameID)
+	if err != nil {
+		return Game{}, err
+	}
+	newGame := collection.FindOne(ctx, bson.M{"_id": id})
+	var game Game
+	err = newGame.Decode(&game)
+	if err != nil {
+		return game, err
+	}
+	return game, nil
 }
 
 // Insert creates a new game instance in the database
-func (h *Handler) Insert(game Game) (*mongo.InsertOneResult, error) {
+func (h *Handler) Insert(game *Body) (Game, error) {
 	collection := h.getCollection()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	doc, _ := bson.Marshal(game)
 	res, err := collection.InsertOne(ctx, doc)
 	if err != nil {
-		return nil, err
+		return Game{}, err
 	}
-	return res, nil
+	newGame := collection.FindOne(ctx, bson.M{"_id": res.InsertedID.(primitive.ObjectID)})
+	var resGame Game
+	err = newGame.Decode(&resGame)
+	log.Printf("Found a single document: %+v\n", resGame)
+	if err != nil {
+		return resGame, err
+	}
+	return resGame, nil
 }
 
 // NewHandler creates a new game collection handler instance

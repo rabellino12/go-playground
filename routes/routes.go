@@ -11,7 +11,7 @@ import (
 
 // SetRoutes is the main function to setup all the server routes
 func SetRoutes(mux *http.ServeMux, logger *log.Logger, client *mongo.Client) {
-	homeHandler := home.NewHandlers(logger, client)
+	homeHandler := home.NewHandlers(logger)
 	homeHandler.SetupRoutes(mux)
 	gameHandler := game.NewHandlers(logger, client)
 	gameHandler.SetupRoutes(mux)
