@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	redis "github.com/rabellino12/go-playground/cache"
 	mongodb "github.com/rabellino12/go-playground/db"
 	"github.com/rabellino12/go-playground/ioclient"
 	"github.com/rabellino12/go-playground/ioclient/iohttp"
@@ -30,9 +31,10 @@ func main() {
 
 func initialize(mux *http.ServeMux, logger *log.Logger) {
 	client, _ := mongodb.SetupDB()
-	routes.SetRoutes(mux, logger, client)
-	iohttp.Init()
-	ioclient.Connect()
+	iohttp := iohttp.Init(logger)
+	r := redis.NewClient(logger)
+	ioclient.Connect(iohttp, r, logger)
+	routes.SetRoutes(mux, logger, client, iohttp)
 }
 
 func getServerAddress() string {

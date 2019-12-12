@@ -2,12 +2,14 @@
 package ioclient
 
 import (
-	"fmt"
 	"log"
 	"time"
 
 	centrifuge "github.com/centrifugal/centrifuge-go"
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/go-redis/redis/v7"
+	"github.com/rabellino12/go-playground/ioclient/iohttp"
+	"github.com/rabellino12/go-playground/ioclient/lobby"
 )
 
 // CentrifugoSecret is the centrifugo server instance secret key
@@ -60,24 +62,6 @@ func (h *eventHandler) OnDisconnect(c *centrifuge.Client, e centrifuge.Disconnec
 	log.Println("Disconnected", e.Reason)
 }
 
-type subEventHandler struct{}
-
-func (h *subEventHandler) OnSubscribeSuccess(sub *centrifuge.Subscription, e centrifuge.SubscribeSuccessEvent) {
-	log.Println(fmt.Sprintf("Successfully subscribed to private channel %s", sub.Channel()))
-}
-
-func (h *subEventHandler) OnSubscribeError(sub *centrifuge.Subscription, e centrifuge.SubscribeErrorEvent) {
-	log.Println(fmt.Sprintf("Error subscribing to private channel %s: %v", sub.Channel(), e.Error))
-}
-
-func (h *subEventHandler) OnUnsubscribe(sub *centrifuge.Subscription, e centrifuge.UnsubscribeEvent) {
-	log.Println(fmt.Sprintf("Unsubscribed from private channel %s", sub.Channel()))
-}
-
-func (h *subEventHandler) OnPublish(sub *centrifuge.Subscription, e centrifuge.PublishEvent) {
-	log.Println(fmt.Sprintf("New message received from channel %s: %s", sub.Channel(), string(e.Data)))
-}
-
 func newConnection() *centrifuge.Client {
 	wsURL := "ws://centrifugo:8081/connection/websocket"
 
@@ -98,24 +82,13 @@ func newConnection() *centrifuge.Client {
 }
 
 // Connect starts the centrifugo connection
-func Connect() {
+func Connect(
+	h *iohttp.IoHTTP,
+	r *redis.Client,
+	l *log.Logger,
+) {
 	log.Println("Start program")
 	c := newConnection()
+	lobby.Initialize(c, r, l, h.Client)
 	defer c.Close()
-
-	sub, err := c.NewSubscription("$lobby:index")
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	subEventHandler := &subEventHandler{}
-	sub.OnSubscribeSuccess(subEventHandler)
-	sub.OnSubscribeError(subEventHandler)
-	sub.OnUnsubscribe(subEventHandler)
-	sub.OnPublish(subEventHandler)
-
-	// Subscribe on private channel.
-	sub.Subscribe()
-
-	select {}
 }

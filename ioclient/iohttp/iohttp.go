@@ -7,68 +7,32 @@ import (
 	"github.com/centrifugal/gocent"
 )
 
+// IoHTTP is a handler for IO actions
+type IoHTTP struct {
+	// Client is a gocent.Client instance
+	Client  *gocent.Client
+	context context.Context
+	logger  *log.Logger
+}
+
 // Init initializes gocent http library connection
-func Init() {
+func Init(logger *log.Logger) *IoHTTP {
 
 	c := gocent.New(gocent.Config{
 		Addr: "http://centrifugo:9000",
 		Key:  "some-centrifugo-api-key",
 	})
 
-	// ch := "lobby:index"
 	ctx := context.Background()
 
-	// err := c.Publish(ctx, ch, []byte(`{"input": "test"}`))
-	// if err != nil {
-	// 	log.Fatalf("Error calling publish: %v", err)
-	// }
-	// log.Printf("Publish into channel %s successful", ch)
+	return &IoHTTP{c, ctx, logger}
+}
 
-	// How to get presence.
-	// presenceResult, err := c.Presence(ctx, ch)
-	// if err != nil {
-	// 	log.Fatalf("Error calling presence: %v", err)
-	// }
-	// log.Printf("Presense for channel %s: %d active subscribers", ch, len(presenceResult.Presence))
-
-	// // How to get presence stats.
-	// presenceStatsResult, err := c.PresenceStats(ctx, ch)
-	// if err != nil {
-	// 	log.Fatalf("Error calling presence: %v", err)
-	// }
-	// log.Printf("Presense stats for channel %s: %d unique users, %d total subscribers", ch, presenceStatsResult.NumUsers, presenceStatsResult.NumClients)
-
-	// // How to get history.
-	// historyResult, err := c.History(ctx, ch)
-	// if err != nil {
-	// 	log.Fatalf("Error calling history: %v", err)
-	// }
-	// log.Printf("History for channel %s, %d messages", ch, len(historyResult.Publications))
-
-	// How to get channels.
-	channelsResult, _ := c.Channels(ctx)
-	log.Printf("Channels: %v", channelsResult.Channels)
-
-	// Get info about nodes.
-	info, err := c.Info(ctx)
+//Publish sends a message to the specified channel
+func (io *IoHTTP) Publish(ch string) {
+	err := io.Client.Publish(io.context, ch, []byte(`{"input": "test"}`))
 	if err != nil {
-		log.Fatalf("Error calling info: %v", err)
+		log.Fatalf("Error calling publish: %v", err)
 	}
-	log.Printf("Info: %d Centrifugo nodes running", len(info.Nodes))
-
-	// How to broadcast the same data into 3 different channels in one request.
-	// chs := []string{"public:chat_1", "public:chat_2", "public:chat_3"}
-	// err = c.Broadcast(ctx, chs, []byte(`{"input": "test"}`))
-	// if err != nil {
-	// 	log.Fatalf("Error calling broadcast: %v", err)
-	// }
-	// log.Printf("Broadcast to %d channels is successful", len(chs))
-
-	// // How to send 3 commands in one request.
-	// pipe := c.Pipe()
-	// pipe.AddPublish(ch, []byte(`{"input": "test1"}`))
-	// pipe.AddPublish(ch, []byte(`{"input": "test2"}`))
-	// pipe.AddPublish(ch, []byte(`{"input": "test3"}`))
-	// replies, err := c.SendPipe(ctx, pipe)
-	// log.Printf("Sent %d publish commands in one HTTP request ", len(replies))
+	log.Printf("Publish into channel %s successful", ch)
 }

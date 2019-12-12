@@ -16,12 +16,6 @@
       "history_size": 10,
       "history_lifetime": 300,
       "history_recover": true
-    },
-    {
-      "name": "public",
-      "history_size": 10,
-      "history_lifetime": 300,
-      "history_recover": true
     }
-]
+  ]
 }
