@@ -1,0 +1,35 @@
+{
+  "name": "typescript-webpack-seed",
+  "version": "0.0.1",
+  "description": "A Starter Seed for TypeScript and Webpack Project",
+  "main": "index.js",
+  "scripts": {
+    "dev": "webpack --mode development",
+    "start": "webpack-dev-server --mode development",
+    "tslint": "tslint -c tslint.json 'src/**/*.ts'",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "typescript",
+    "webpack",
+    "seed",
+    "starterkit"
+  ],
+  "author": "Mathías Rabellino <mathiasrabellino@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "awesome-typescript-loader": "^5.0.0",
+    "copy-webpack-plugin": "^5.1.1",
+    "file-loader": "^5.0.2",
+    "image-webpack-loader": "^6.0.0",
+    "tslint": "^5.10.0",
+    "tslint-eslint-rules": "^5.3.1",
+    "typescript": "^2.9.1",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10",
+    "webpack-dev-server": "^3.9.0"
+  },
+  "dependencies": {
+    "phaser": "^3.21.0"
+  }
+}
