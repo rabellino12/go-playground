@@ -6,9 +6,9 @@ import (
 	"time"
 
 	centrifuge "github.com/centrifugal/centrifuge-go"
+	"github.com/centrifugal/gocent"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-redis/redis/v7"
-	"github.com/rabellino12/go-playground/ioclient/iohttp"
 	"github.com/rabellino12/go-playground/ioclient/lobby"
 )
 
@@ -16,8 +16,6 @@ import (
 const CentrifugoSecret = "some-centrifugo-secret-key"
 
 func connToken(user string, exp int64) string {
-	// NOTE that JWT must be generated on backend side of your application!
-	// Here we are generating it on client side only for example simplicity.
 	claims := jwt.MapClaims{"sub": user}
 	if exp > 0 {
 		claims["exp"] = exp
@@ -30,8 +28,6 @@ func connToken(user string, exp int64) string {
 }
 
 func subscribeToken(channel string, client string, exp int64) string {
-	// NOTE that JWT must be generated on backend side of your application!
-	// Here we are generating it on client side only for example simplicity.
 	claims := jwt.MapClaims{"channel": channel, "client": client}
 	if exp > 0 {
 		claims["exp"] = exp
@@ -83,12 +79,12 @@ func newConnection() *centrifuge.Client {
 
 // Connect starts the centrifugo connection
 func Connect(
-	h *iohttp.IoHTTP,
+	g *gocent.Client,
 	r *redis.Client,
 	l *log.Logger,
 ) {
 	log.Println("Start program")
 	c := newConnection()
-	lobby.Initialize(c, r, l, h.Client)
+	lobby.Initialize(c, r, l, g)
 	defer c.Close()
 }

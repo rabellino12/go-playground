@@ -1,39 +1,38 @@
 import Centrifuge from 'centrifuge';
-import {Observable} from 'rxjs';
+import { Observable } from 'rxjs';
 
-interface ConnectionEvent {
-    client: string
-    transport: string
-    latency: number
+export interface IConnectionEvent {
+	client: string;
+	transport: string;
+	latency: number;
 }
-interface DisconnectionEvent {
-    reason: string
-    reconnect: boolean
-}
-
-export function connect(): Centrifuge {
-    var centrifuge = new Centrifuge('ws://localhost:8081/connection/websocket');
-
-    centrifuge.subscribe("news", function(message) {
-        console.log(message);
-    });
-
-    centrifuge.connect();
-    return centrifuge
+export interface IDisconnectionEvent {
+	reason: string;
+	reconnect: boolean;
 }
 
-export function onConnect$(client: Centrifuge): Observable<ConnectionEvent> {
-    return new Observable<ConnectionEvent>(sub => {
-        client.on('connect', (context: ConnectionEvent /* Couldn't find correct type for this context */) => {
-            sub.next(context)
-        })
-    });
-}
+export class WSClient {
+	public onConnect$?: Observable<IConnectionEvent>;
+	public onDisconnect$?: Observable<IDisconnectionEvent>;
+	private client: Centrifuge;
 
-export function onDisconnect(client: Centrifuge): Observable<DisconnectionEvent> {
-    return new Observable<DisconnectionEvent>(sub => {
-        client.on('disconnect', function(context) {
-            sub.next(context)
-        });
-    })
+	constructor() {
+		this.client = new Centrifuge('ws://localhost:8081/connection/websocket');
+	}
+	public connect(token: string): void {
+		this.client.setToken(token);
+		this.client.connect();
+		this.onConnect$ = new Observable<IConnectionEvent>(sub => {
+			this.client.on('connect', (
+				context: IConnectionEvent /* Couldn't find correct type for this context */
+			) => {
+				sub.next(context);
+			});
+		});
+		this.onDisconnect$ = new Observable<IDisconnectionEvent>(sub => {
+			this.client.on('disconnect', (context: IDisconnectionEvent) => {
+				sub.next(context);
+			});
+		});
+	}
 }

@@ -31,10 +31,10 @@ func main() {
 
 func initialize(mux *http.ServeMux, logger *log.Logger) {
 	client, _ := mongodb.SetupDB()
-	iohttp := iohttp.Init(logger)
+	ioh := iohttp.Init(logger)
 	r := redis.NewClient(logger)
-	ioclient.Connect(iohttp, r, logger)
-	routes.SetRoutes(mux, logger, client, iohttp)
+	ioclient.Connect(ioh.Client, r, logger)
+	routes.SetRoutes(mux, logger, client, ioh)
 }
 
 func getServerAddress() string {

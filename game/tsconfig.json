@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     /* Basic Options */
-    "target": "es5", // Versione di JS target di transpilazione
+    "target": "es2015", // Versione di JS target di transpilazione
     "module": "commonjs", //Posso usare AMD UMD o ESNEXT
     "strict": true,
     "outDir": "dist",
