@@ -30,6 +30,8 @@
     "webpack-dev-server": "^3.9.0"
   },
   "dependencies": {
-    "phaser": "^3.21.0"
+    "centrifuge": "^2.2.3",
+    "phaser": "^3.21.0",
+    "rxjs": "^6.5.3"
   }
 }
