@@ -6,7 +6,6 @@ import (
 
 	"github.com/centrifugal/gocent"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/rabellino12/go-playground/ioclient"
 )
 
 // Client is a handler for IO actions
@@ -15,6 +14,13 @@ type Client struct {
 	Client  *gocent.Client
 	context context.Context
 	logger  *log.Logger
+}
+
+// CentrifugeAuthCustomClaims struct for jwt
+type CentrifugeAuthCustomClaims struct {
+	Client  string `json:"client"`
+	Channel string `json:"channel"`
+	jwt.StandardClaims
 }
 
 // Init initializes gocent http library connection
@@ -37,23 +43,4 @@ func (io *Client) Publish(ch string) {
 		log.Fatalf("Error calling publish: %v", err)
 	}
 	log.Printf("Publish into channel %s successful", ch)
-}
-
-// GetJWT receives a username and returns a jwt
-func (io *Client) GetJWT(userName string) (string, error) {
-	signingKey := []byte(ioclient.CentrifugoSecret)
-
-	// Create the Claims
-	claims := &jwt.StandardClaims{
-		// ExpiresAt: 150000,
-		Issuer: userName,
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	// Sign and get the complete encoded token as a string using the secret
-	tokenString, err := token.SignedString(signingKey)
-	if err != nil {
-		return "", err
-	}
-	return tokenString, nil
 }

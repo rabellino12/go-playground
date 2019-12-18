@@ -14,25 +14,61 @@ export interface IDisconnectionEvent {
 export class WSClient {
 	public onConnect$?: Observable<IConnectionEvent>;
 	public onDisconnect$?: Observable<IDisconnectionEvent>;
-	private client: Centrifuge;
+	public cent: Centrifuge;
 
 	constructor() {
-		this.client = new Centrifuge('ws://localhost:8081/connection/websocket');
+		this.cent = new Centrifuge('ws://localhost:8081/connection/websocket', {
+			onPrivateSubscribe: this.onPrivateSubscribe,
+			subscribeEndpoint: 'http://localhost:8080/auth/centrifuge'
+		});
 	}
+
 	public connect(token: string): void {
-		this.client.setToken(token);
-		this.client.connect();
+		this.cent.setToken(token);
+		this.cent.connect();
 		this.onConnect$ = new Observable<IConnectionEvent>(sub => {
-			this.client.on('connect', (
+			this.cent.on('connect', (
 				context: IConnectionEvent /* Couldn't find correct type for this context */
 			) => {
 				sub.next(context);
 			});
 		});
 		this.onDisconnect$ = new Observable<IDisconnectionEvent>(sub => {
-			this.client.on('disconnect', (context: IDisconnectionEvent) => {
+			this.cent.on('disconnect', (context: IDisconnectionEvent) => {
 				sub.next(context);
 			});
 		});
+	}
+
+	public subscribe(channel: string): Observable<any> {
+		return new Observable<any>(sub => {
+			this.cent.subscribe(channel, e => {
+				sub.next(e);
+			});
+		});
+	}
+
+	private onPrivateSubscribe(
+		{ data }: Centrifuge.SubscribePrivateContext,
+		cb: (res: Centrifuge.SubscribePrivateResponse) => void
+	): void {
+		fetch('http://localhost:8080/auth/centrifuge', {
+			body: JSON.stringify(data),
+			method: 'POST'
+		})
+			.then(res => {
+				if (!res.ok) {
+					throw new Error('Authorization request failed');
+				}
+				return res.json();
+			})
+			.then(data => {
+				return {
+					data,
+					status: 200
+				};
+			})
+			.then(cb)
+			.catch(console.log);
 	}
 }

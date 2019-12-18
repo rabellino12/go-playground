@@ -33,7 +33,7 @@ func initialize(mux *http.ServeMux, logger *log.Logger) {
 	client, _ := mongodb.SetupDB()
 	ioh := iohttp.Init(logger)
 	r := redis.NewClient(logger)
-	ioclient.Connect(ioh.Client, r, logger)
+	go ioclient.Connect(ioh.Client, r, logger)
 	routes.SetRoutes(mux, logger, client, ioh)
 }
 

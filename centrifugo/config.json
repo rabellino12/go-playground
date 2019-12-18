@@ -10,12 +10,6 @@
   "admin_password": "admin",
   "admin_secret": "some-centrifugo-admin-secret-key",
   "insecure_admin": true,
-  "namespaces": [
-    {
-      "name": "lobby",
-      "history_size": 10,
-      "history_lifetime": 300,
-      "history_recover": true
-    }
-  ]
+  "presence": true,
+  "join_leave": true
 }

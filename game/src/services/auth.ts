@@ -1,6 +1,6 @@
-export function fetchJWT(username: string): Promise<string> {
+export function fetchJWT(user: string): Promise<string> {
 	return fetch('http://localhost:8080/auth/jwt', {
-		body: JSON.stringify({ username }),
+		body: JSON.stringify({ user }),
 		method: 'POST'
 	})
 		.then(res => {
@@ -8,7 +8,7 @@ export function fetchJWT(username: string): Promise<string> {
 			return body;
 		})
 		.then(body => {
-			return body.jwt;
+			return body.token;
 		})
 		.catch(err => {
 			throw err;

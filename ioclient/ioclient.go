@@ -3,36 +3,16 @@ package ioclient
 
 import (
 	"log"
-	"time"
 
 	centrifuge "github.com/centrifugal/centrifuge-go"
 	"github.com/centrifugal/gocent"
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-redis/redis/v7"
+	"github.com/rabellino12/go-playground/helper"
 	"github.com/rabellino12/go-playground/ioclient/lobby"
 )
 
-// CentrifugoSecret is the centrifugo server instance secret key
-const CentrifugoSecret = "some-centrifugo-secret-key"
-
 func connToken(user string, exp int64) string {
-	claims := jwt.MapClaims{"sub": user}
-	if exp > 0 {
-		claims["exp"] = exp
-	}
-	t, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(CentrifugoSecret))
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-func subscribeToken(channel string, client string, exp int64) string {
-	claims := jwt.MapClaims{"channel": channel, "client": client}
-	if exp > 0 {
-		claims["exp"] = exp
-	}
-	t, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte("secret"))
+	t, err := helper.GetJWT(user)
 	if err != nil {
 		panic(err)
 	}
@@ -42,7 +22,11 @@ func subscribeToken(channel string, client string, exp int64) string {
 type eventHandler struct{}
 
 func (h *eventHandler) OnPrivateSub(c *centrifuge.Client, e centrifuge.PrivateSubEvent) (string, error) {
-	token := subscribeToken(e.Channel, e.ClientID, time.Now().Unix()+10)
+	token, err := helper.GetSubscriptionJWT(e.ClientID, e.Channel)
+	if err != nil {
+		log.Println("error on private sub")
+		return "", err
+	}
 	return token, nil
 }
 
@@ -83,8 +67,10 @@ func Connect(
 	r *redis.Client,
 	l *log.Logger,
 ) {
-	log.Println("Start program")
+	l.Println("Start program")
 	c := newConnection()
-	lobby.Initialize(c, r, l, g)
 	defer c.Close()
+	lobby.Initialize(c, r, l, g)
+	l.Println("IO initialized")
+	select {}
 }

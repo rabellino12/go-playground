@@ -2,11 +2,12 @@ package auth
 
 import (
 	"encoding/json"
-	"github.com/rabellino12/go-playground/helper"
-	"github.com/rabellino12/go-playground/ioclient/iohttp"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/rabellino12/go-playground/helper"
+	"github.com/rabellino12/go-playground/ioclient/iohttp"
 )
 
 // Handlers is a Struct that contains handler methods and shared server data
@@ -17,12 +18,27 @@ type Handlers struct {
 
 // Auth struct containing authentication data
 type Auth struct {
-	Jwt string `json:"jwt"`
+	Token string `json:"token"`
 }
 
 // User type structure, contains username
 type User struct {
-	Username string `json:"username"`
+	User string `json:"user"`
+}
+
+// PrivSubscription is the centrifuge auth subscription body
+type PrivSubscription struct {
+	Client   string   `json:"client"`
+	Channels []string `json:"channels"`
+}
+
+type channel struct {
+	Channel string `json:"channel"`
+	Token   string `json:"token"`
+}
+
+type privSubscriptionResponse struct {
+	Channels []channel `json:"channels"`
 }
 
 // Jwt handles the jwt authentication request route "/"
@@ -32,18 +48,18 @@ func (h *Handlers) Jwt(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		h.logger.Fatalln("Error decoding body", err.Error())
+		h.logger.Println("Error decoding body", err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	token, err := h.ioh.GetJWT(user.Username)
+	token, err := helper.GetJWT(user.User)
 	if err != nil {
 		h.logger.Println("Error encoding token", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	js, err := json.Marshal(&Auth{Jwt: token})
+	js, err := json.Marshal(&Auth{Token: token})
 	if err != nil {
 		h.logger.Println("Error encoding response", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -52,6 +68,34 @@ func (h *Handlers) Jwt(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(js))
+}
+
+// Centrifuge handles the centrifuge private channel subscription token request "/"
+func (h *Handlers) Centrifuge(w http.ResponseWriter, r *http.Request) {
+	helper.EnableCors(&w)
+	var req PrivSubscription
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		h.logger.Println("Error decoding body", err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	token, err := helper.GetSubscriptionJWT(req.Client, req.Channels[0])
+	if err != nil {
+		h.logger.Println("Error encoding token", err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	js, err := json.Marshal(&privSubscriptionResponse{[]channel{channel{req.Channels[0], token}}})
+	if err != nil {
+		h.logger.Println("Error encoding response", err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(js)
 }
 
 // Logger is the Home logging middleware
@@ -67,6 +111,7 @@ func (h *Handlers) Logger(next http.HandlerFunc) http.HandlerFunc {
 // SetupRoutes creates all home related routes
 func (h *Handlers) SetupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/auth/jwt", h.Logger(h.Jwt))
+	mux.HandleFunc("/auth/centrifuge", h.Logger(h.Centrifuge))
 }
 
 // NewHandlers returns a home page handlers struct
