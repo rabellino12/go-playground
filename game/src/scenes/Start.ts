@@ -26,7 +26,6 @@ export class StartScene extends Phaser.Scene {
 	}
 
 	public preload() {
-    console.log(this.scene.settings.data)
 		this.load.image('sky', sky);
 		this.load.image('ground', platform);
 		this.load.image('star', star);

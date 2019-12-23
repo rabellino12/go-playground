@@ -44,3 +44,12 @@ func (io *Client) Publish(ch string) {
 	}
 	log.Printf("Publish into channel %s successful", ch)
 }
+
+// Presence is the method to Get channel's users
+func (io *Client) Presence(ch string) (map[string]gocent.ClientInfo, error) {
+	users, err := io.Client.Presence(io.context, ch)
+	if err != nil {
+		return nil, err
+	}
+	return users.Presence, err
+}

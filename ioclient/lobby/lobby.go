@@ -27,18 +27,18 @@ func (h *subEventHandler) OnSubscribeSuccess(sub *centrifuge.Subscription, e cen
 
 func (h *subEventHandler) OnJoin(sub *centrifuge.Subscription, e centrifuge.JoinEvent) {
 	h.logger.Println("New lobby join")
-	users, err := sub.Presence()
+	users, err := h.http.Presence(context.Background(), sub.Channel())
 	if err != nil {
 		h.logger.Println("error getting lobby users: ", err.Error())
 	}
-	if len(users) < 2 {
+	if len(users.Presence) < 2 {
 		sub.Publish([]byte(`{"status": "wait"}`))
 	}
-	if len(users) == 2 {
+	if len(users.Presence) == 2 {
 		ctx := context.Background()
 		pipe := h.http.Pipe()
 		gameStamp := time.Now()
-		for _, user := range users {
+		for _, user := range users.Presence {
 			h.redis.Append(fmt.Sprintf("game:%s", gameStamp), user.User)
 			pipe.AddPublish(fmt.Sprintf("lobby#%s", user.User), []byte(fmt.Sprintf(`{"status": "join", "game": "%s"}`, gameStamp)))
 		}
@@ -61,7 +61,7 @@ func (h *subEventHandler) OnPublish(sub *centrifuge.Subscription, e centrifuge.P
 
 // Initialize lobby io controller
 func Initialize(c *centrifuge.Client, r *redis.Client, logger *log.Logger, http *gocent.Client) {
-	sub, err := c.NewSubscription("$lobby")
+	sub, err := c.NewSubscription("$lobby:index")
 	if err != nil {
 		logger.Println(err)
 	}

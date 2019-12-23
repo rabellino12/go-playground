@@ -16,6 +16,8 @@ interface Lobby {
 	id?: string;
 }
 
+const userId = 'user1';
+
 class PhaserApp extends Phaser.Game {
 	private client: WSClient;
 	private token?: string;
@@ -37,11 +39,33 @@ class PhaserApp extends Phaser.Game {
 			.catch(err => {
 				console.log(err);
 			});
-		const sub = this.client.cent.subscribe('$lobby');
-		sub.on('subscribe', console.log);
-		sub.on('unsubscribe', console.log);
-		sub.on('join', console.log);
-		sub.on('error', console.log);
+		const sub = this.client.cent.subscribe('$lobby:index');
+		sub.on('subscribe', (e) => {
+			console.log('Subscribe', e);
+		});
+		sub.on('unsubscribe', (e) => {
+			console.log('unsubscribe', e);
+		});
+		sub.on('join', (e) => {
+			console.log('Join', e);
+		});
+		sub.on('error', (e) => {
+			console.log('Error', e);
+		});
+
+		const sub2 = this.client.cent.subscribe(`lobby#${userId}`);
+		sub2.on('subscribe', (e) => {
+			console.log('Subscribe2', e);
+		});
+		sub2.on('unsubscribe', (e) => {
+			console.log('unsubscribe2', e);
+		});
+		sub2.on('join', (e) => {
+			console.log('Join2', e);
+		});
+		sub2.on('publish', (e) => {
+			console.log('publish', e);
+		});
 
 		// this.lobby$ = this.client.subscribe('lobby');
 		// this.lobby$.subscribe(e => {
@@ -63,7 +87,7 @@ class PhaserApp extends Phaser.Game {
 	}
 
 	private getToken(): Promise<string> {
-		return fetchJWT('user1');
+		return fetchJWT(userId);
 	}
 }
 

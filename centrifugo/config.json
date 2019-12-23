@@ -11,5 +11,14 @@
   "admin_secret": "some-centrifugo-admin-secret-key",
   "insecure_admin": true,
   "presence": true,
-  "join_leave": true
+  "join_leave": true,
+  "namespaces": [
+    {
+      "name": "lobby",
+      "publish": true,
+      "join_leave": true,
+      "presence": true,
+      "history_recover": true
+    }
+  ]
 }
