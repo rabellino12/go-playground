@@ -12,6 +12,15 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.html$/,
+        use: [ {
+          loader: 'html-loader',
+          options: {
+            minimize: true
+          }
+        }],
+      },
+      {
         test: /\.ts$/,
         loader: "awesome-typescript-loader",
         exclude: /node_modules/
@@ -22,7 +31,7 @@ module.exports = {
           {
             loader: "file-loader",
             options: {
-              publicPath: 'dist'
+              publicPath: "dist"
             }
           }
         ]

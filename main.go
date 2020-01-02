@@ -8,7 +8,8 @@ import (
 	redis "github.com/rabellino12/go-playground/cache"
 	mongodb "github.com/rabellino12/go-playground/db"
 	"github.com/rabellino12/go-playground/ioclient"
-	"github.com/rabellino12/go-playground/ioclient/iohttp"
+	"github.com/rabellino12/go-playground/iohttp"
+	"github.com/rabellino12/go-playground/loop"
 	"github.com/rabellino12/go-playground/routes"
 	"github.com/rabellino12/go-playground/server"
 )
@@ -34,6 +35,7 @@ func initialize(mux *http.ServeMux, logger *log.Logger) {
 	ioh := iohttp.Init(logger)
 	r := redis.NewClient(logger)
 	go ioclient.Connect(ioh.Client, r, logger)
+	loop.Initialize(ioh, logger)
 	routes.SetRoutes(mux, logger, client, ioh)
 }
 

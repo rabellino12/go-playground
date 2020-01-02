@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/rabellino12/go-playground/helper"
-	"github.com/rabellino12/go-playground/ioclient/iohttp"
+	"github.com/rabellino12/go-playground/iohttp"
 )
 
 // Handlers is a Struct that contains handler methods and shared server data

@@ -1,12 +1,10 @@
 import Phaser from 'phaser';
-import { Observable } from 'rxjs';
 
 import bomb from '../assets/bomb.png';
 import dude from '../assets/dude.png';
 import platform from '../assets/platform.png';
 import sky from '../assets/sky.png';
 import star from '../assets/star.png';
-import { IConnectionEvent, WSClient } from '../services/centrifuge';
 
 export class StartScene extends Phaser.Scene {
 	public platforms?: Phaser.Physics.Arcade.StaticGroup;

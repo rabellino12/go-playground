@@ -37,8 +37,8 @@ func Init(logger *log.Logger) *Client {
 }
 
 //Publish sends a message to the specified channel
-func (io *Client) Publish(ch string) {
-	err := io.Client.Publish(io.context, ch, []byte(`{"input": "test"}`))
+func (io *Client) Publish(ch string, message []byte) {
+	err := io.Client.Publish(io.context, ch, message)
 	if err != nil {
 		log.Fatalf("Error calling publish: %v", err)
 	}

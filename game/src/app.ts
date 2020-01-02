@@ -1,9 +1,9 @@
 import Phaser from 'phaser';
-import { Subscription, Observable } from 'rxjs';
 
 import { StartScene } from './scenes/Start';
 import { fetchJWT } from './services/auth';
 import { WSClient } from './services/centrifuge';
+import { generateUsername } from './services/username';
 
 const config = {
 	height: 600,
@@ -16,15 +16,15 @@ interface Lobby {
 	id?: string;
 }
 
-const userId = 'user1';
-
 class PhaserApp extends Phaser.Game {
 	private client: WSClient;
+	private userId: string;
 	private token?: string;
 	// private lobby$: Observable<any>;
 
 	constructor() {
 		super(config);
+		this.userId = generateUsername();
 		this.client = new WSClient();
 		this.getToken()
 			.then(token => {
@@ -39,6 +39,8 @@ class PhaserApp extends Phaser.Game {
 			.catch(err => {
 				console.log(err);
 			});
+	}
+	private listenEvents() {
 		const sub = this.client.cent.subscribe('$lobby:index');
 		sub.on('subscribe', (e) => {
 			console.log('Subscribe', e);
@@ -52,8 +54,6 @@ class PhaserApp extends Phaser.Game {
 		sub.on('error', (e) => {
 			console.log('Error', e);
 		});
-	}
-	private listenEvents() {
 		if (this.client.onConnect$) {
 			this.client.onConnect$.subscribe(context => {
 				console.log('WS Connected');
@@ -68,7 +68,7 @@ class PhaserApp extends Phaser.Game {
 	}
 
 	private getToken(): Promise<string> {
-		return fetchJWT(userId);
+		return fetchJWT(this.userId);
 	}
 }
 

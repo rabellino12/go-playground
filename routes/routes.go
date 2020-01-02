@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/rabellino12/go-playground/ioclient/iohttp"
+	"github.com/rabellino12/go-playground/iohttp"
 	"github.com/rabellino12/go-playground/routes/auth"
 	"github.com/rabellino12/go-playground/routes/game"
 	"github.com/rabellino12/go-playground/routes/home"
