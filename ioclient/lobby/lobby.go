@@ -1,10 +1,7 @@
 package lobby
 
 import (
-	"context"
-	"fmt"
 	"log"
-	"time"
 
 	centrifuge "github.com/centrifugal/centrifuge-go"
 	"github.com/centrifugal/gocent"
@@ -27,24 +24,6 @@ func (h *subEventHandler) OnSubscribeSuccess(sub *centrifuge.Subscription, e cen
 
 func (h *subEventHandler) OnJoin(sub *centrifuge.Subscription, e centrifuge.JoinEvent) {
 	h.logger.Println("New lobby join")
-	users, err := h.http.Presence(context.Background(), sub.Channel())
-	if err != nil {
-		h.logger.Println("error getting lobby users: ", err.Error())
-	}
-	if len(users.Presence) < 2 {
-		sub.Publish([]byte(`{"status": "wait"}`))
-	}
-	if len(users.Presence) == 2 {
-		ctx := context.Background()
-		pipe := h.http.Pipe()
-		gameStamp := time.Now()
-		for _, user := range users.Presence {
-			h.redis.Append(fmt.Sprintf("game:%s", gameStamp), user.User)
-			pipe.AddPublish(fmt.Sprintf("lobby#%s", user.User), []byte(fmt.Sprintf(`{"status": "join", "game": "%s"}`, gameStamp)))
-		}
-		h.redis.Set(loadingLobbies, gameStamp, 0)
-		h.http.SendPipe(ctx, pipe)
-	}
 }
 
 func (h *subEventHandler) OnSubscribeError(sub *centrifuge.Subscription, e centrifuge.SubscribeErrorEvent) {

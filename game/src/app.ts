@@ -54,6 +54,22 @@ class PhaserApp extends Phaser.Game {
 		sub.on('error', (e) => {
 			console.log('Error', e);
 		});
+		const personalSub = this.client.cent.subscribe(`lobby#${this.userId}`);
+		personalSub.on('subscribe', (e) => {
+			console.log('personalSub:Subscribe', e);
+		});
+		personalSub.on('unsubscribe', (e) => {
+			console.log('personalSub:unsubscribe', e);
+		});
+		personalSub.on('join', (e) => {
+			console.log('personalSub:Join', e);
+		});
+		personalSub.on('error', (e) => {
+			console.log('personalSub:Error', e);
+		});
+		personalSub.on('publish', (e) => {
+			console.log('personalSub:publish', e);
+		});
 		if (this.client.onConnect$) {
 			this.client.onConnect$.subscribe(context => {
 				console.log('WS Connected');

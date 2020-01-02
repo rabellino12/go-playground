@@ -42,7 +42,6 @@ func (io *Client) Publish(ch string, message []byte) {
 	if err != nil {
 		log.Fatalf("Error calling publish: %v", err)
 	}
-	log.Printf("Publish into channel %s successful", ch)
 }
 
 // Presence is the method to Get channel's users

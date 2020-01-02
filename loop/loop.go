@@ -4,10 +4,16 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
+	redis "github.com/go-redis/redis/v7"
 	"github.com/rabellino12/go-playground/iohttp"
 )
+
+const emptyLobbies string = "emptyLobbies"
+const loadingLobbies string = "loadingLobbies"
+const fullLobbies string = "fullLobbies"
 
 // Handler is the loop methods handler
 type Handler struct {
@@ -15,13 +21,14 @@ type Handler struct {
 	quit   chan struct{}
 	ticker *time.Ticker
 	logger *log.Logger
+	redis  *redis.Client
 }
 
 // Initialize starts the loop and creates the quit chanel
-func Initialize(io *iohttp.Client, logger *log.Logger) {
+func Initialize(io *iohttp.Client, logger *log.Logger, redis *redis.Client) {
 	ticker := time.NewTicker(time.Second / 20)
 	quit := make(chan struct{})
-	h := &Handler{io, quit, ticker, logger}
+	h := &Handler{io, quit, ticker, logger, redis}
 	go h.loop()
 	// close(quit)
 }
@@ -29,8 +36,7 @@ func Initialize(io *iohttp.Client, logger *log.Logger) {
 func (h *Handler) loop() {
 	for {
 		select {
-		case t := <-h.ticker.C:
-			fmt.Println("Tick at", t)
+		case <-h.ticker.C:
 			h.lobby()
 		case <-h.quit:
 			fmt.Println("ticker stopped")
@@ -50,10 +56,16 @@ func (h *Handler) lobby() {
 	if len(users) == 2 {
 		ctx := context.Background()
 		pipe := h.io.Client.Pipe()
-		gameStamp := time.Now().Nanosecond() / 1000
+		now := time.Now()
+		nanos := now.UnixNano()
+		gameStamp := nanos / 1000000
+		fmt.Println("New Game: ", gameStamp)
 		for _, user := range users {
-			h.redis.Append(fmt.Sprintf("game:%s", gameStamp), user.User)
-			pipe.AddPublish(fmt.Sprintf("lobby#%s", user.User), []byte(fmt.Sprintf(`{"status": "join", "game": "%s"}`, gameStamp)))
+			if user.User != "112" {
+				h.redis.Append(fmt.Sprintf("game:%s", strconv.FormatInt(gameStamp, 2)), user.User)
+				pipe.AddPublish(fmt.Sprintf("lobby#%s", user.User), []byte(fmt.Sprintf(`{"status": "join", "game": "%s"}`, strconv.FormatInt(gameStamp, 2))))
+				pipe.AddUnsubscribe("$lobby:index", user.User)
+			}
 		}
 		h.redis.Set(loadingLobbies, gameStamp, 0)
 		h.io.Client.SendPipe(ctx, pipe)

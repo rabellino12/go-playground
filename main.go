@@ -35,7 +35,7 @@ func initialize(mux *http.ServeMux, logger *log.Logger) {
 	ioh := iohttp.Init(logger)
 	r := redis.NewClient(logger)
 	go ioclient.Connect(ioh.Client, r, logger)
-	loop.Initialize(ioh, logger)
+	loop.Initialize(ioh, logger, r)
 	routes.SetRoutes(mux, logger, client, ioh)
 }
 
