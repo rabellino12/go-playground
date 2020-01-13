@@ -11,6 +11,6 @@ export function fetchJWT(user: string): Promise<string> {
 			return body.token;
 		})
 		.catch(err => {
-			throw err;
+			console.log(err);
 		});
 }

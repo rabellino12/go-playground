@@ -52,3 +52,12 @@ func (io *Client) Presence(ch string) (map[string]gocent.ClientInfo, error) {
 	}
 	return users.Presence, err
 }
+
+// History is the method to Get channel's message history
+func (io *Client) History(ch string) (gocent.HistoryResult, error) {
+	history, err := io.Client.History(io.context, ch)
+	if err != nil {
+		return gocent.HistoryResult{}, err
+	}
+	return history, err
+}

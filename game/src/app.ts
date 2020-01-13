@@ -4,6 +4,7 @@ import { StartScene } from './scenes/Start';
 import { fetchJWT } from './services/auth';
 import { WSClient } from './services/centrifuge';
 import { generateUsername } from './services/username';
+import Centrifuge from 'centrifuge';
 
 const config = {
 	height: 600,
@@ -20,6 +21,8 @@ class PhaserApp extends Phaser.Game {
 	private client: WSClient;
 	private userId: string;
 	private token?: string;
+	private sub: Centrifuge.Subscription | undefined;
+	private personalSub: Centrifuge.Subscription | undefined;
 	// private lobby$: Observable<any>;
 
 	constructor() {
@@ -30,57 +33,56 @@ class PhaserApp extends Phaser.Game {
 			.then(token => {
 				this.token = token;
 				this.client.connect(this.token);
+				this.listenEvents();
 				this.scene.add('Start', StartScene);
 				this.scene.start('Start', {
+					personalSub: this.personalSub,
+					userId: this.userId,
 					wsClient: this.client
 				});
-				this.listenEvents();
 			})
 			.catch(err => {
 				console.log(err);
 			});
 	}
 	private listenEvents() {
-		const sub = this.client.cent.subscribe('$lobby:index');
-		sub.on('subscribe', (e) => {
+		this.lobbySubscription();
+		this.personalSubscription();
+	}
+
+	private lobbySubscription() {
+		this.sub = this.client.cent.subscribe('$lobby:index');
+		this.sub.on('subscribe', (e) => {
 			console.log('Subscribe', e);
 		});
-		sub.on('unsubscribe', (e) => {
+		this.sub.on('unsubscribe', (e) => {
 			console.log('unsubscribe', e);
 		});
-		sub.on('join', (e) => {
+		this.sub.on('join', (e) => {
 			console.log('Join', e);
 		});
-		sub.on('error', (e) => {
+		this.sub.on('error', (e) => {
 			console.log('Error', e);
 		});
-		const personalSub = this.client.cent.subscribe(`lobby#${this.userId}`);
-		personalSub.on('subscribe', (e) => {
+	}
+
+	private personalSubscription() {
+		this.personalSub = this.client.cent.subscribe(`lobby#${this.userId}`);
+		this.personalSub.on('subscribe', (e) => {
 			console.log('personalSub:Subscribe', e);
 		});
-		personalSub.on('unsubscribe', (e) => {
+		this.personalSub.on('unsubscribe', (e) => {
 			console.log('personalSub:unsubscribe', e);
 		});
-		personalSub.on('join', (e) => {
+		this.personalSub.on('join', (e) => {
 			console.log('personalSub:Join', e);
 		});
-		personalSub.on('error', (e) => {
+		this.personalSub.on('error', (e) => {
 			console.log('personalSub:Error', e);
 		});
-		personalSub.on('publish', (e) => {
+		this.personalSub.on('publish', (e) => {
 			console.log('personalSub:publish', e);
 		});
-		if (this.client.onConnect$) {
-			this.client.onConnect$.subscribe(context => {
-				console.log('WS Connected');
-			});
-		}
-		if (this.client.onDisconnect$) {
-			this.client.onDisconnect$.subscribe(context => {
-				// this.lobby$.unsubscribe();
-				console.log(context);
-			});
-		}
 	}
 
 	private getToken(): Promise<string> {

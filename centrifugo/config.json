@@ -19,6 +19,13 @@
       "join_leave": true,
       "presence": true,
       "history_recover": true
+    },
+    {
+      "name": "match",
+      "publish": true,
+      "join_leave": true,
+      "presence": true,
+      "history_recover": true
     }
   ]
 }

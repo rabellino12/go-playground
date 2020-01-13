@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/centrifugal/gocent"
 	redis "github.com/go-redis/redis/v7"
 	"github.com/rabellino12/go-playground/iohttp"
 )
@@ -38,6 +39,7 @@ func (h *Handler) loop() {
 		select {
 		case <-h.ticker.C:
 			h.lobby()
+			h.matches()
 		case <-h.quit:
 			fmt.Println("ticker stopped")
 			return
@@ -45,27 +47,59 @@ func (h *Handler) loop() {
 	}
 }
 
+func (h *Handler) handleMatch(game string) {
+	channel := "match:" + game
+	messagesQuery := h.redis.LRange(channel, 0, -1)
+	messages, err := messagesQuery.Result()
+	if err != nil {
+		h.logger.Println("error getting game history: ", err.Error())
+		return
+	}
+	pipe := h.io.Client.Pipe()
+	h.redis.Del(channel)
+	for _, message := range messages {
+		pipe.AddPublish("$"+channel, []byte(message))
+	}
+	h.io.Client.SendPipe(context.Background(), pipe)
+}
+
+func (h *Handler) matches() {
+	gamesQuery := h.redis.LRange("games", 0, -1)
+	games, err := gamesQuery.Result()
+	if err != nil {
+		h.logger.Println("error getting game: ", err.Error())
+		return
+	}
+	for _, game := range games {
+		h.handleMatch(game)
+	}
+}
+
 func (h *Handler) lobby() {
 	users, err := h.io.Presence("$lobby:index")
+	var players []gocent.ClientInfo
+	for _, user := range users {
+		if user.User != "112" {
+			players = append(players, user)
+		}
+	}
 	if err != nil {
 		h.logger.Println("error getting lobby users: ", err.Error())
 	}
-	if len(users) < 2 {
-		h.io.Publish("$lobby:index", []byte(`{"status": "wait"}`))
+	if len(players) < 2 {
+		h.io.Publish("$lobby:index", []byte(`{"event": "wait"}`))
 	}
-	if len(users) == 2 {
+	if len(players) == 2 {
 		ctx := context.Background()
 		pipe := h.io.Client.Pipe()
 		now := time.Now()
 		nanos := now.UnixNano()
 		gameStamp := nanos / 1000000
 		fmt.Println("New Game: ", gameStamp)
-		for _, user := range users {
-			if user.User != "112" {
-				h.redis.Append(fmt.Sprintf("game:%s", strconv.FormatInt(gameStamp, 2)), user.User)
-				pipe.AddPublish(fmt.Sprintf("lobby#%s", user.User), []byte(fmt.Sprintf(`{"status": "join", "game": "%s"}`, strconv.FormatInt(gameStamp, 2))))
-				pipe.AddUnsubscribe("$lobby:index", user.User)
-			}
+		h.redis.LPush("games", strconv.FormatInt(gameStamp, 10))
+		for _, player := range players {
+			pipe.AddPublish(fmt.Sprintf("lobby#%s", player.User), []byte(fmt.Sprintf(`{"event": "join", "game": "%s"}`, strconv.FormatInt(gameStamp, 10))))
+			pipe.AddUnsubscribe("$lobby:index", player.User)
 		}
 		h.redis.Set(loadingLobbies, gameStamp, 0)
 		h.io.Client.SendPipe(ctx, pipe)
