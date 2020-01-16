@@ -1,8 +1,8 @@
 import Centrifuge from 'centrifuge';
 import Phaser from 'phaser';
 
-import { MovementIO } from '../services/movementIO';
 import { WSClient } from '../services/centrifuge';
+import { IMove, MovementIO } from '../services/movementIO';
 
 import bomb from '../assets/bomb.png';
 import dude from '../assets/dude.png';
@@ -15,6 +15,24 @@ interface IEnemy {
 	sprite: Phaser.Physics.Arcade.Sprite;
 }
 
+interface IAction {
+	velocityY?: number;
+	velocityX?: number;
+}
+
+interface IMoves {
+	up: IAction;
+	left: IAction;
+	right: IAction;
+	stop: IAction;
+}
+
+interface IEnemyMove {
+	enemy: IEnemy;
+	action: IAction;
+	dir: 'left' | 'right' | 'up' | 'stop';
+}
+
 export class StartScene extends Phaser.Scene {
 	public platforms?: Phaser.Physics.Arcade.StaticGroup;
 	public player?: Phaser.Physics.Arcade.Sprite;
@@ -24,6 +42,8 @@ export class StartScene extends Phaser.Scene {
 	public wsClient?: WSClient;
 	private personalSub?: Centrifuge.Subscription;
 	private movementService?: MovementIO;
+	private moves!: IMoves;
+	private enemyMoves: IEnemyMove[] = [];
 	constructor() {
 		super({
 			physics: {
@@ -43,6 +63,24 @@ export class StartScene extends Phaser.Scene {
 		}
 		this.wsClient = data.wsClient;
 		this.userId = data.userId;
+		this.moves = {
+			left: {
+				velocityX: -260,
+				velocityY: undefined
+			},
+			right: {
+				velocityX: 260,
+				velocityY: undefined
+			},
+			stop: {
+				velocityX: 0,
+				velocityY: undefined
+			},
+			up: {
+				velocityX: undefined,
+				velocityY: -630
+			}
+		};
 	}
 
 	public preload() {
@@ -69,11 +107,12 @@ export class StartScene extends Phaser.Scene {
 		this.setAnimations();
 	}
 	public update() {
-		if (!this.movementService || !this.wsClient) {
+		if (!this.movementService) {
 			return;
 		}
 		this.cursors = this.input.keyboard.createCursorKeys();
 		if (
+			!this.movementService ||
 			!this.cursors ||
 			!this.player ||
 			!this.cursors.left ||
@@ -92,14 +131,16 @@ export class StartScene extends Phaser.Scene {
 			this.movementService.move('right');
 		} else {
 			this.player.setVelocityX(0);
-			this.player.anims.play('turn');
+			this.player.anims.play('stop');
 			this.movementService.stop();
 		}
 
 		if (this.cursors.up.isDown && this.player.body.touching.down) {
 			this.player.setVelocityY(-630);
-			this.movementService.move('jump');
+			this.movementService.move('up');
 		}
+		this.checkMoves();
+		this.checkPosition();
 	}
 
 	public handlePersonalPublish = ({ data }: any) => {
@@ -109,14 +150,28 @@ export class StartScene extends Phaser.Scene {
 				matchId: data.game,
 				userId: this.userId
 			});
-			this.movementService.matchSubscription.on('publish', (e: any) => {
-				console.log(e);
+			this.movementService.movements$.subscribe(pub => {
+				if (!this.movementService) {
+					return;
+				}
+				const enemy = this.enemies.find(
+					en => !!(pub.info && en.id === pub.info.user)
+				);
+				if (!enemy) {
+					return;
+				}
+				const move: IMove = pub.data;
+				this.enemyMoves.push({
+					action: this.moves[move.action],
+					dir: pub.data.action,
+					enemy
+				});
 			});
 			this.movementService.enemies$.subscribe(e => {
 				e.forEach(this.handleEnemiesEvent);
 			});
 		}
-	}
+	};
 
 	private setAnimations = () => {
 		this.anims.create({
@@ -129,7 +184,7 @@ export class StartScene extends Phaser.Scene {
 		this.anims.create({
 			frameRate: 20,
 			frames: [{ key: 'dude', frame: 4 }],
-			key: 'turn'
+			key: 'stop'
 		});
 
 		this.anims.create({
@@ -138,9 +193,12 @@ export class StartScene extends Phaser.Scene {
 			key: 'right',
 			repeat: -1
 		});
-	}
+	};
 
-	private createPlayer = (x: number, y: number): Phaser.Physics.Arcade.Sprite => {
+	private createPlayer = (
+		x: number,
+		y: number
+	): Phaser.Physics.Arcade.Sprite => {
 		if (!this.platforms) {
 			throw new Error('No platforms created');
 		}
@@ -150,7 +208,7 @@ export class StartScene extends Phaser.Scene {
 		player.setCollideWorldBounds(true);
 		this.physics.add.collider(player, this.platforms);
 		return player;
-	}
+	};
 
 	private handleEnemiesEvent = (data: string | undefined) => {
 		if (!this.player || !data) {
@@ -168,5 +226,36 @@ export class StartScene extends Phaser.Scene {
 				});
 			}
 		}
-	}
+	};
+	private handleMove = (
+		player: Phaser.Physics.Arcade.Sprite,
+		dir: IMove['action']
+	) => {
+		if (!this.movementService || !this.moves[dir]) {
+			return;
+		}
+		const { velocityX, velocityY } = this.moves[dir];
+		if (velocityX !== undefined) {
+			player.setVelocityX(velocityX);
+		}
+		if (velocityY !== undefined) {
+			player.setVelocityY(velocityY);
+		}
+		if (dir === 'stop') {
+			player.anims.play(dir);
+		} else if (dir !== 'up') {
+			player.anims.play(dir, true);
+		}
+	};
+
+	private checkMoves = () => {
+		const moves = this.enemyMoves.splice(0, this.enemyMoves.length);
+		for (let i = 0; i < moves.length; i++) {
+			const move = moves[i];
+			this.handleMove(move.enemy.sprite, move.dir);
+		}
+	};
+	private checkPosition = () => {
+		
+	};
 }

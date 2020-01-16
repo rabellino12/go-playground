@@ -17,9 +17,10 @@ type subEventHandler struct {
 
 // Move interface
 type Move struct {
-	action    string `json:"action"`
-	timestamp int    `json:"timestamp"`
-	matchID   string `json:"matchId"`
+	Action    string `json:"action"`
+	Timestamp int    `json:"timestamp"`
+	MatchID   string `json:"matchId"`
+	UserID    string `json:"userId"`
 }
 
 func (h *subEventHandler) OnUnsubscribe(sub *centrifuge.Subscription, e centrifuge.UnsubscribeEvent) {
@@ -33,7 +34,7 @@ func (h *subEventHandler) OnPublish(sub *centrifuge.Subscription, e centrifuge.P
 	if err != nil {
 		return
 	}
-	h.redis.LPush("match:"+move.matchID, move)
+	h.redis.LPush("match:"+move.MatchID, move)
 }
 
 // Initialize lobby io controller

@@ -8,13 +8,14 @@ interface IParams {
 	matchId: string;
 }
 
-interface IMove {
-	action: string;
+export interface IMove {
+	action: 'up' | 'left' | 'right' | 'stop';
 	matchId: string;
 	timestamp: number;
+	userId: string;
 }
 export class MovementIO {
-	public movements$!: Observable<IMove>;
+	public movements$!: Observable<Centrifuge.PublicationContext>;
 	public enemies$!: Observable<Array<string | undefined>>;
 	public matchSubscription: Centrifuge.Subscription;
 	private c: WSClient;
@@ -30,11 +31,12 @@ export class MovementIO {
 		this.initializeEvents();
 	}
 
-	public move = (action: string) => {
+	public move = (action: 'up' | 'left' | 'right' | 'stop') => {
 		const message: IMove = {
 			action,
 			matchId: this.match,
-			timestamp: this.getTime()
+			timestamp: this.getTime(),
+			userId: this.userId
 		};
 		if (this.lastMove !== action) {
 			this.matchSubscription.publish(message);
@@ -46,7 +48,8 @@ export class MovementIO {
 		const message: IMove = {
 			action: 'stop',
 			matchId: this.match,
-			timestamp: this.getTime()
+			timestamp: this.getTime(),
+			userId: this.userId
 		};
 		if (this.lastMove !== 'stop') {
 			this.matchSubscription.publish(message);
@@ -59,9 +62,8 @@ export class MovementIO {
 	}
 
 	private initializeEvents = () => {
-		console.log(this.matchSubscription);
-		this.movements$ = new Observable<IMove>(sub => {
-			this.matchSubscription.on('publish', (e: IMove) => {
+		this.movements$ = new Observable<Centrifuge.PublicationContext>(sub => {
+			this.matchSubscription.on('publish', (e: Centrifuge.PublicationContext) => {
 				sub.next(e);
 			});
 		});

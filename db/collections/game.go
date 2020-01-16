@@ -12,8 +12,7 @@ import (
 
 // Body is the game request body struct
 type Body struct {
-	Players []string `bson:"players" json:"players"`
-	Name    string   `bson:"name" json:"name"`
+	Players []Player `bson:"players" json:"players"`
 }
 
 // Game is the game collection struct
@@ -21,6 +20,13 @@ type Game struct {
 	Body `bson:",inline"`
 	// ObjectId() or objectid.ObjectID is deprecated--use primitive instead
 	ID primitive.ObjectID `bson:"_id, omitempty" json:"_id"`
+}
+
+// Player is the game player structure, with player id, index and position "x,y"
+type Player struct {
+	Index           int    `bson:"index, omitempty" json:"index"`
+	InitialPosition string `bson:"initialPosition, omitempty" json:"initialPosition"`
+	ID              string `bson:"id, omitempty" json:"id"`
 }
 
 // Handler is the Game collection handler
