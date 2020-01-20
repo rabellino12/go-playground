@@ -2,15 +2,19 @@ package loop
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/centrifugal/gocent"
 	redis "github.com/go-redis/redis/v7"
 	game "github.com/rabellino12/go-playground/db/collections"
 	"github.com/rabellino12/go-playground/helper"
+	"github.com/rabellino12/go-playground/ioclient/match"
 	"github.com/rabellino12/go-playground/iohttp"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 const emptyLobbies string = "emptyLobbies"
@@ -24,14 +28,16 @@ type Handler struct {
 	ticker      *time.Ticker
 	logger      *log.Logger
 	redis       *redis.Client
+	mongoClient *mongo.Client
 	gameHandler *game.Handler
 }
 
 // Initialize starts the loop and creates the quit chanel
-func Initialize(io *iohttp.Client, logger *log.Logger, redis *redis.Client, game *game.Handler) {
+func Initialize(io *iohttp.Client, logger *log.Logger, redis *redis.Client, mongoClient *mongo.Client) {
 	ticker := time.NewTicker(time.Second / 20)
 	quit := make(chan struct{})
-	h := &Handler{io, quit, ticker, logger, redis, game}
+	gameHandler := game.NewHandler(mongoClient)
+	h := &Handler{io, quit, ticker, logger, redis, mongoClient, gameHandler}
 	go h.loop()
 	// close(quit)
 }
@@ -91,14 +97,14 @@ func (h *Handler) lobby() {
 	if len(players) < 2 {
 		h.io.Publish("$lobby:index", []byte(`{"event": "wait"}`))
 	}
-	if len(players) >= 2 {
+	if len(players) == 2 {
 		ctx := context.Background()
 		pipe := h.io.Client.Pipe()
 		var newGame game.Body
 		playersList := []game.Player{}
 		for i, player := range players {
 			initialPosition := helper.GetPlayerInitialPosition(i)
-			playersList = append(playersList, game.Player{Index: i, InitialPosition: initialPosition, ID: player.User})
+			playersList = append(playersList, game.Player{Index: i, Position: initialPosition, ID: player.User})
 		}
 		newGame = game.Body{Players: playersList}
 		resGame, err := h.gameHandler.Insert(&newGame)
@@ -106,11 +112,40 @@ func (h *Handler) lobby() {
 			h.logger.Println("error creating new game: ", err.Error())
 			return
 		}
-		h.redis.LPush("games", resGame.ID.String())
-		for _, player := range playersList {
-			pipe.AddPublish(fmt.Sprintf("lobby#%s", player.ID), []byte(fmt.Sprintf(`{"event": "join", "game": "%s", position: "%s" }`, resGame.ID.String(), player.InitialPosition)))
-			pipe.AddUnsubscribe("$lobby:index", player.ID)
+		h.redis.LPush("games", resGame.ID.Hex())
+		for _, p := range playersList {
+			h.logger.Println("game player: ", p)
+			joinJS, joinErr := json.Marshal(match.JoinEvent{
+				Event:   "join",
+				Game:    resGame.ID.Hex(),
+				Players: playersList,
+			})
+			if joinErr != nil {
+				h.logger.Println("error parsing join event: ", joinErr.Error())
+				return
+			}
+			err = pipe.AddPublish(fmt.Sprintf("lobby#%s", p.ID), joinJS)
+			if err != nil {
+				h.logger.Println("error adding personal lobby notification: ", err.Error())
+				return
+			}
+			err = pipe.AddUnsubscribe("$lobby:index", p.ID)
+			if err != nil {
+				h.logger.Println("error unsubscribing user from lobby:index: ", err.Error())
+				return
+			}
 		}
-		h.io.Client.SendPipe(ctx, pipe)
+		lobbyReply, err2 := h.io.Client.SendPipe(ctx, pipe)
+		if err2 != nil {
+			h.logger.Println("error sending pipe on lobby loop ", err2.Error())
+			return
+		}
+		for index, rep := range lobbyReply {
+			if rep.Error != nil {
+				h.logger.Println("error sending pipe "+strconv.FormatInt(int64(index), 10)+" on lobby loop ", rep.Error)
+			} else {
+				h.logger.Println("sent pipe "+strconv.FormatInt(int64(index), 10)+" on lobby loop ", rep.Result)
+			}
+		}
 	}
 }

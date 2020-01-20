@@ -27,9 +27,14 @@ func (h *Handlers) gateway(w http.ResponseWriter, r *http.Request) {
 
 // get is a handler funciton for get single game route "/"
 func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
-	game := game.Body{Name: "gametest", Players: []string{"player1", "player2"}}
-
-	js, err := json.Marshal(game)
+	anotherQuery := r.URL.Query()
+	gameID := anotherQuery.Get("id")
+	if gameID == "" {
+		http.Error(w, "You must send a game id on query", http.StatusInternalServerError)
+		return
+	}
+	resGame, err := h.gameHandler.Get(gameID)
+	js, err := json.Marshal(resGame)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

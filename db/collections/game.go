@@ -24,9 +24,9 @@ type Game struct {
 
 // Player is the game player structure, with player id, index and position "x,y"
 type Player struct {
-	Index           int    `bson:"index, omitempty" json:"index"`
-	InitialPosition string `bson:"initialPosition, omitempty" json:"initialPosition"`
-	ID              string `bson:"id, omitempty" json:"id"`
+	Index    int    `bson:"index, omitempty" json:"index"`
+	Position string `bson:"position, omitempty" json:"position"`
+	ID       string `bson:"id, omitempty" json:"id"`
 }
 
 // Handler is the Game collection handler

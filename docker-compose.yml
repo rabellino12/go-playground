@@ -2,10 +2,19 @@ version: '3'
 services:
   web:
     build: .
+    security_opt:
+      - seccomp:unconfined
+    # entrypoint: dlv debug /opt/go/src/github.com/rabellino12/go-playground -l 0.0.0.0:40000 --headless=true --log=true --log-output=true
+    # volumes:
+    #   - .:/opt/go/src/github.com/rabellino12/go-playground
+    expose:
+      - "8080"
+      - "40000"
     environment: 
       - SERVER_ADDRESS=8080
     ports:
       - "8080:8080"
+      - "40000:40000"
     links:
       - "db:mongodb"
       - "centrifugo:io"

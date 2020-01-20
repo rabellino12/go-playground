@@ -10,8 +10,14 @@ import platform from '../assets/platform.png';
 import sky from '../assets/sky.png';
 import star from '../assets/star.png';
 
-interface IEnemy {
+interface IPlayer {
 	id: string;
+	position: {
+		x: number;
+		y: number;
+	};
+}
+interface IEnemy extends IPlayer {
 	sprite: Phaser.Physics.Arcade.Sprite;
 }
 
@@ -140,7 +146,6 @@ export class StartScene extends Phaser.Scene {
 			this.movementService.move('up');
 		}
 		this.checkMoves();
-		this.checkPosition();
 	}
 
 	public handlePersonalPublish = ({ data }: any) => {
@@ -150,6 +155,18 @@ export class StartScene extends Phaser.Scene {
 				matchId: data.game,
 				userId: this.userId
 			});
+			this.handleEnemiesEvent(
+				data.players.map((p: any) => {
+					const [x, y] = p.position;
+					return {
+						...p,
+						position: {
+							x: Number(x),
+							y: Number(y)
+						}
+					};
+				})
+			);
 			this.movementService.movements$.subscribe(pub => {
 				if (!this.movementService) {
 					return;
@@ -166,9 +183,6 @@ export class StartScene extends Phaser.Scene {
 					dir: pub.data.action,
 					enemy
 				});
-			});
-			this.movementService.enemies$.subscribe(e => {
-				e.forEach(this.handleEnemiesEvent);
 			});
 		}
 	};
@@ -210,21 +224,29 @@ export class StartScene extends Phaser.Scene {
 		return player;
 	};
 
-	private handleEnemiesEvent = (data: string | undefined) => {
-		if (!this.player || !data) {
+	private handleEnemiesEvent = (players: IPlayer[]) => {
+		if (!this.player || !players) {
 			return;
 		}
-		if (this.userId && this.userId !== data) {
-			const enemy = this.enemies.find(e => e.id === data);
-			if (!enemy) {
-				this.enemies.push({
-					id: data,
-					sprite: this.createPlayer(
-						this.player.x + 10 * (1 + this.enemies.length),
-						450
-					)
-				});
+		if (this.userId) {
+			const meIndex = players.findIndex((p) => p.id === this.userId);
+			if (meIndex > -1) {
+				this.player.setPosition(players[meIndex].position.x, players[meIndex].position.y);
+				players.splice(meIndex, 1);
 			}
+			players.forEach(player => {
+				const enemy = this.enemies.find(e => e.id === player.id);
+				if (!enemy) {
+					this.enemies.push({
+						id: player.id,
+						position: player.position,
+						sprite: this.createPlayer(
+							player.position.x,
+							player.position.y
+						)
+					});
+				}
+			});
 		}
 	};
 	private handleMove = (
@@ -254,8 +276,5 @@ export class StartScene extends Phaser.Scene {
 			const move = moves[i];
 			this.handleMove(move.enemy.sprite, move.dir);
 		}
-	};
-	private checkPosition = () => {
-		
-	};
+	}
 }
