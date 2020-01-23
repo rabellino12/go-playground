@@ -1,14 +1,10 @@
 import Centrifuge from 'centrifuge';
 import Phaser from 'phaser';
 
-import { WSClient } from '../services/centrifuge';
-import { IMove, MovementIO } from '../services/movementIO';
+import { WSClient } from '../../services/centrifuge';
+import { IMove, MovementIO } from '../../services/movementIO';
 
-import bomb from '../assets/bomb.png';
-import dude from '../assets/dude.png';
-import platform from '../assets/platform.png';
-import sky from '../assets/sky.png';
-import star from '../assets/star.png';
+const assetsPrefix = '/game/assets';
 
 interface IPlayer {
 	id: string;
@@ -54,7 +50,7 @@ export class StartScene extends Phaser.Scene {
 		super({
 			physics: {
 				arcade: {
-					debug: false,
+					debug: true,
 					gravity: { y: 1000 }
 				},
 				default: 'arcade'
@@ -90,11 +86,11 @@ export class StartScene extends Phaser.Scene {
 	}
 
 	public preload() {
-		this.load.image('sky', sky);
-		this.load.image('ground', platform);
-		this.load.image('star', star);
-		this.load.image('bomb', bomb);
-		this.load.spritesheet('dude', dude, { frameWidth: 32, frameHeight: 48 });
+		this.load.image('sky', `${assetsPrefix}/sky.png`);
+		this.load.image('ground', `${assetsPrefix}/platform.png`);
+		this.load.image('star', `${assetsPrefix}/star.png`);
+		this.load.image('bomb', `${assetsPrefix}/bomb.png`);
+		this.load.spritesheet('dude', `${assetsPrefix}/dude.png`, { frameWidth: 32, frameHeight: 48 });
 	}
 
 	public create() {

@@ -1,4 +1,4 @@
-import Centrifuge = require('centrifuge');
+import Centrifuge from 'centrifuge';
 import { Observable } from 'rxjs';
 import { WSClient } from './centrifuge';
 

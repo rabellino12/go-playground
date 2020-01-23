@@ -1,32 +1,30 @@
 import Phaser from 'phaser';
-
-import { StartScene } from './scenes/Start';
-import { fetchJWT } from './services/auth';
-import { WSClient } from './services/centrifuge';
-import { generateUsername } from './services/username';
 import Centrifuge from 'centrifuge';
 
-const config = {
-	height: 600,
-	type: Phaser.AUTO,
-	width: 800
-};
+import { StartScene } from './scenes/Start';
+import { fetchJWT } from '../services/auth';
+import { WSClient } from '../services/centrifuge';
+import { generateUsername } from '../services/username';
 
 interface Lobby {
 	status: string;
 	id?: string;
 }
 
-class PhaserApp extends Phaser.Game {
+export class PhaserApp extends Phaser.Game {
 	private client: WSClient;
 	private userId: string;
 	private token?: string;
 	private sub: Centrifuge.Subscription | undefined;
 	private personalSub: Centrifuge.Subscription | undefined;
-	// private lobby$: Observable<any>;
 
-	constructor() {
-		super(config);
+	constructor(parent: HTMLElement) {
+		super({
+			height: 600,
+			type: Phaser.AUTO,
+			width: 800,
+			parent
+		});
 		this.userId = generateUsername();
 		this.client = new WSClient();
 		this.getToken()
@@ -89,5 +87,3 @@ class PhaserApp extends Phaser.Game {
 		return fetchJWT(this.userId);
 	}
 }
-
-new PhaserApp();
