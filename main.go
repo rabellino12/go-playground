@@ -6,7 +6,9 @@ import (
 	"os"
 
 	redis "github.com/rabellino12/go-playground/cache"
+	controller "github.com/rabellino12/go-playground/controllers"
 	mongodb "github.com/rabellino12/go-playground/db"
+	game "github.com/rabellino12/go-playground/db/collections"
 	"github.com/rabellino12/go-playground/ioclient"
 	"github.com/rabellino12/go-playground/iohttp"
 	"github.com/rabellino12/go-playground/loop"
@@ -35,7 +37,20 @@ func initialize(mux *http.ServeMux, logger *log.Logger) {
 	ioh := iohttp.Init(logger)
 	r := redis.NewClient(logger)
 	go ioclient.Connect(ioh.Client, r, logger)
-	loop.Initialize(ioh, logger, r, mongoClient)
+	matchController := &controller.Match{
+		IO:     ioh,
+		Logger: logger,
+		Redis:  r,
+	}
+	gameHandler := game.NewHandler(mongoClient)
+	lobbyController := &controller.Lobby{
+		IO:          ioh,
+		Logger:      logger,
+		Redis:       r,
+		GameHandler: gameHandler,
+	}
+	loop.Initialize(matchController)
+	loop.Initialize(lobbyController)
 	routes.SetRoutes(mux, logger, mongoClient, ioh)
 }
 
