@@ -49,8 +49,8 @@ func initialize(mux *http.ServeMux, logger *log.Logger) {
 		Redis:       r,
 		GameHandler: gameHandler,
 	}
-	loop.Initialize(matchController)
-	loop.Initialize(lobbyController)
+	loop.Initialize(matchController, 60)
+	loop.Initialize(lobbyController, 20)
 	routes.SetRoutes(mux, logger, mongoClient, ioh)
 }
 

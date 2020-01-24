@@ -5,10 +5,6 @@ import (
 	"time"
 )
 
-const emptyLobbies string = "emptyLobbies"
-const loadingLobbies string = "loadingLobbies"
-const fullLobbies string = "fullLobbies"
-
 // Handler is the loop methods handler
 type Handler struct {
 	quit       chan struct{}
@@ -17,8 +13,8 @@ type Handler struct {
 }
 
 // Initialize starts the loop and creates the quit chanel
-func Initialize(controller Controller) {
-	ticker := time.NewTicker(time.Second / 20)
+func Initialize(controller Controller, hz time.Duration) {
+	ticker := time.NewTicker(time.Second / hz)
 	quit := make(chan struct{})
 	h := &Handler{quit, ticker, controller}
 	go h.loop()
