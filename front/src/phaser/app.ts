@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import Centrifuge from 'centrifuge';
 
 import { StartScene } from './scenes/Start';
+import { MatchScene } from './scenes/Match';
 import { fetchJWT } from '../services/auth';
 import { WSClient } from '../services/centrifuge';
 import { generateUsername } from '../services/username';
@@ -33,7 +34,8 @@ export class PhaserApp extends Phaser.Game {
 				this.client.connect(this.token);
 				this.listenEvents();
 				this.scene.add('Start', StartScene);
-				this.scene.start('Start', {
+				this.scene.add('Match', MatchScene);
+				this.scene.start('Match', {
 					personalSub: this.personalSub,
 					userId: this.userId,
 					wsClient: this.client
