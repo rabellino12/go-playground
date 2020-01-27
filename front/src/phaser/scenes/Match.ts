@@ -115,7 +115,7 @@ export class MatchScene extends Phaser.Scene {
     this.world = planck.World(gravity);
     this.ground = this.createEnvironment();
     this.player = this.createPlayer(100, 450);
-    // this.setAnimations();
+    this.setAnimations();
   }
 
   public update() {
@@ -126,26 +126,26 @@ export class MatchScene extends Phaser.Scene {
     if (!this.cursors.left || !this.cursors.right || !this.cursors.up) {
       return ;
     }
+    const player: Phaser.GameObjects.Sprite = this.player.m_userData as Phaser.GameObjects.Sprite;
     if (this.cursors.up.isDown && this.playerTouchingFloor()) {
-			var f = this.player.getWorldVector(planck.Vec2(0.0, -0.80));
-      var p = this.player.getWorldPoint(planck.Vec2(0.0, 0.08));
+			const f = this.player.getWorldVector(planck.Vec2(0.0, -0.80));
+      const p = this.player.getWorldPoint(planck.Vec2(0.0, 0.08));
       this.player.applyLinearImpulse(f, p, true);
 		}
 		if (this.cursors && this.cursors.left.isDown) {
-      var f = this.player.getWorldVector(planck.Vec2(0.0, -0.80));
-      var p = this.player.getWorldPoint(planck.Vec2(0.0, 0.08));
+      const f = this.player.getWorldVector(planck.Vec2(-0.10, 0));
+      const p = this.player.getWorldPoint(planck.Vec2(0, 0));
       this.player.applyLinearImpulse(f, p, true);
-			// this.player.anims.play('left', true);
+			player.anims.play('left', true);
 			// this.movementService.move('left');
 		} else if (this.cursors.right.isDown) {
-      var f = this.player.getWorldVector(planck.Vec2(0.30, 0.0));
-      var p = this.player.getWorldPoint(planck.Vec2(0.08, 0.0));
+      const f = this.player.getWorldVector(planck.Vec2(0.10, 0));
+      const p = this.player.getWorldPoint(planck.Vec2(0, 0));
       this.player.applyLinearImpulse(f, p, true);
-			// this.player.anims.play('right', true);
+			player.anims.play('right', true);
 			// this.movementService.move('right');
 		} else {
-			// this.player.setVelocityX(0);
-			// this.player.anims.play('stop');
+			player.anims.play('stop', true);
 			// this.movementService.stop();
 		}
 
@@ -160,10 +160,12 @@ export class MatchScene extends Phaser.Scene {
         // get body user data, the graphics object
         let userData: any = b.getUserData();
 
-        // adjust graphic object position and rotation
-        userData.x = bodyPosition.x * this.worldScale;
-        userData.y = bodyPosition.y * this.worldScale;
-        userData.rotation = bodyAngle;
+        if (userData) {
+          // adjust graphic object position and rotation
+          userData.x = bodyPosition.x * this.worldScale;
+          userData.y = bodyPosition.y * this.worldScale;
+          userData.rotation = bodyAngle;
+        }
     }
   }
 
@@ -204,51 +206,6 @@ export class MatchScene extends Phaser.Scene {
     const ground = list.find(fixture => fixture === this.ground.getFixtureList())
     return Boolean(player && ground);
   }
-
-  private createBox = (
-    posX: number,
-    posY: number,
-    width: number,
-    height: number,
-    isDynamic: boolean
-  ) => {
-    // this is how we create a generic Box2D body
-    let box = this.world.createBody();
-    if (isDynamic) {
-      // Box2D bodies born as static bodies, but we can make them dynamic
-      box.setDynamic();
-    }
-
-    // a body can have one or more fixtures. This is how we create a box fixture inside a body
-    box.createFixture(
-      planck.Box(width / 2 / this.worldScale, height / 2 / this.worldScale)
-    );
-
-    // now we place the body in the world
-    box.setPosition(
-      planck.Vec2(posX / this.worldScale, posY / this.worldScale)
-    );
-
-    // time to set mass information
-    box.setMassData({
-      mass: 1,
-      center: planck.Vec2(),
-
-      // I have to say I do not know the meaning of this "I", but if you set it to zero, bodies won't rotate
-      I: 1
-    });
-
-    // now we create a graphics object representing the body
-    var color = new Phaser.Display.Color();
-    color.random();
-    color.brighten(50).saturate(100);
-    let userData = this.add.graphics();
-    userData.fillStyle(color.color, 1);
-    userData.fillRect(-width / 2, -height / 2, width, height);
-
-    // a body can have anything in its user data, normally it's used to store its sprite
-    box.setUserData(userData);
-  };
 
   private setAnimations = () => {
     this.anims.create({
@@ -304,7 +261,7 @@ export class MatchScene extends Phaser.Scene {
     });
     ground.createFixture({
       density: 1,
-      friction: 0.3,
+      friction: 1,
       shape: planck.Box((800 / this.worldScale) / 2, (64 / this.worldScale)/2)
     });
     ground.setPosition(planck.Vec2(400 / this.worldScale, 568 / this.worldScale));
@@ -314,6 +271,35 @@ export class MatchScene extends Phaser.Scene {
       I: 1
     });
     ground.setUserData(plat);
+    const borderLeft = this.world.createBody({
+      type: 'static',
+      position: planck.Vec2(0, 0)
+    });
+    borderLeft.createFixture({
+      density: 1,
+      friction: 0,
+      shape: planck.Edge(planck.Vec2(0, 0), planck.Vec2(0, 568 / this.worldScale))
+    });
+    borderLeft.setPosition(planck.Vec2(0, 0));
+    borderLeft.setMassData({
+      mass: 1,
+      center: planck.Vec2(),
+      I: 1
+    });
+    const borderRight = this.world.createBody({
+      type: 'static',
+      position: planck.Vec2(0, 0)
+    });
+    borderRight.createFixture({
+      density: 1,
+      friction: 0,
+      shape: planck.Edge(planck.Vec2(800 / this.worldScale, 0), planck.Vec2(800 / this.worldScale, 568 / this.worldScale))
+    });
+    borderRight.setMassData({
+      mass: 1,
+      center: planck.Vec2(),
+      I: 1
+    });
     return ground;
   }
 
