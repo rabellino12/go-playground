@@ -3,7 +3,7 @@ module github.com/rabellino12/go-playground
 go 1.13
 
 require (
-	github.com/ByteArena/box2d v1.0.2 // indirect
+	github.com/ByteArena/box2d v1.0.2
 	github.com/centrifugal/centrifuge-go v0.2.3
 	github.com/centrifugal/gocent v2.0.2+incompatible
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible

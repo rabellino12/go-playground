@@ -13,19 +13,12 @@ type Match struct {
 	IO     *iohttp.Client
 	Logger *log.Logger
 	Redis  *redis.Client
+	ID     string
 }
 
 // RunLoop method acts as init for match loop handler
 func (m *Match) RunLoop() {
-	gamesQuery := m.Redis.LRange("games", 0, -1)
-	games, err := gamesQuery.Result()
-	if err != nil {
-		m.Logger.Println("error getting game: ", err.Error())
-		return
-	}
-	for _, game := range games {
-		m.handleMatch(game)
-	}
+	go m.handleMatch(m.ID)
 }
 
 func (m *Match) handleMatch(game string) {
