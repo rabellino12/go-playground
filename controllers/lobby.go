@@ -54,6 +54,7 @@ func (l *Lobby) RunLoop() {
 			return
 		}
 		l.Redis.LPush("games", resGame.ID.Hex())
+		go MakeMatch(l.IO, l.Logger, l.Redis, resGame.ID.Hex())
 		for _, p := range playersList {
 			l.Logger.Println("game player: ", p)
 			joinJS, joinErr := json.Marshal(match.JoinEvent{

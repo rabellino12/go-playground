@@ -6,6 +6,7 @@ import (
 
 	redis "github.com/go-redis/redis/v7"
 	"github.com/rabellino12/go-playground/iohttp"
+	"github.com/rabellino12/go-playground/loop"
 )
 
 // Match is the struct for handling lobby actions on loop
@@ -16,13 +17,19 @@ type Match struct {
 	ID     string
 }
 
-// RunLoop method acts as init for match loop handler
-func (m *Match) RunLoop() {
-	go m.handleMatch(m.ID)
+// MakeMatch starts a new match instance with its own loop, intended to be used on its own goroutine
+func MakeMatch(io *iohttp.Client, logger *log.Logger, redis *redis.Client, id string) {
+	match := &Match{
+		IO:     io,
+		Logger: logger,
+		Redis:  redis,
+	}
+	loop.Initialize(match, 60)
 }
 
-func (m *Match) handleMatch(game string) {
-	channel := "match:" + game
+// RunLoop method acts as init for match loop handler
+func (m *Match) RunLoop() {
+	channel := "match:" + m.ID
 	messagesQuery := m.Redis.LRange(channel, 0, -1)
 	messages, err := messagesQuery.Result()
 	if err != nil {
@@ -35,4 +42,5 @@ func (m *Match) handleMatch(game string) {
 		pipe.AddPublish("$"+channel, []byte(message))
 	}
 	m.IO.Client.SendPipe(context.Background(), pipe)
+
 }

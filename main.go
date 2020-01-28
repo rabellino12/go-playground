@@ -37,11 +37,6 @@ func initialize(mux *http.ServeMux, logger *log.Logger) {
 	ioh := iohttp.Init(logger)
 	r := redis.NewClient(logger)
 	go ioclient.Connect(ioh.Client, r, logger)
-	matchController := &controller.Match{
-		IO:     ioh,
-		Logger: logger,
-		Redis:  r,
-	}
 	gameHandler := game.NewHandler(mongoClient)
 	lobbyController := &controller.Lobby{
 		IO:          ioh,
@@ -49,7 +44,6 @@ func initialize(mux *http.ServeMux, logger *log.Logger) {
 		Redis:       r,
 		GameHandler: gameHandler,
 	}
-	loop.Initialize(matchController, 60)
 	loop.Initialize(lobbyController, 20)
 	routes.SetRoutes(mux, logger, mongoClient, ioh)
 }
