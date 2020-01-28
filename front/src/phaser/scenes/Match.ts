@@ -139,18 +139,20 @@ export class MatchScene extends Phaser.Scene {
       }
 			player.anims.play('left', true);
 			// this.movementService.move('left');
-		} else if (this.cursors.right.isDown) {
+		} else if (this.cursors && this.cursors.right.isDown) {
       if (vel.x < 5) {
         force = 50;
       }
 			player.anims.play('right', true);
 			// this.movementService.move('right');
 		} else {
-      force = vel.x * -10;
+      if (vel.x) {
+        force = vel. x * -10
+      }
 			player.anims.play('stop', true);
 			// this.movementService.stop();
     }
-    this.player.applyForce(planck.Vec2(force, 0), this.player.getWorldCenter())
+    this.player.applyForce(planck.Vec2(force, 0), this.player.getWorldCenter(), true)
 
     for (let b = this.world.getBodyList(); b; b = b.getNext()){
         let bodyPosition = b.getPosition();
@@ -236,8 +238,8 @@ export class MatchScene extends Phaser.Scene {
     });
     const fix = body.createFixture({
       density: 1,
-      friction: 0.3,
-      shape: planck.Box((48/this.worldScale)/2, (48/this.worldScale)/2)
+      friction: 0,
+      shape: planck.Box((28/this.worldScale)/2, (48/this.worldScale)/2)
     });
     body.setPosition(planck.Vec2(100 / this.worldScale, 350 / this.worldScale));
     body.setMassData({
