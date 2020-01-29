@@ -241,7 +241,7 @@ export class MatchScene extends Phaser.Scene {
       friction: 0,
       shape: planck.Box((28/this.worldScale)/2, (48/this.worldScale)/2)
     });
-    body.setPosition(planck.Vec2(100 / this.worldScale, 350 / this.worldScale));
+    body.setPosition(planck.Vec2(x / this.worldScale, y / this.worldScale));
     body.setMassData({
       mass: 1,
       center: planck.Vec2(),
