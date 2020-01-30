@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"log"
 
 	redis "github.com/go-redis/redis/v7"
@@ -39,11 +38,9 @@ func (m *Match) RunLoop() {
 		m.Logger.Println("error getting game history: ", err.Error())
 		return
 	}
-	pipe := m.IO.Client.Pipe()
 	m.Redis.Del(channel)
 	for _, message := range messages {
-		pipe.AddPublish("$"+channel, []byte(message))
+		// Process moves here
 	}
-	m.IO.Client.SendPipe(context.Background(), pipe)
 
 }

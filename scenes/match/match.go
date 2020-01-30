@@ -50,6 +50,7 @@ func (s *Scene) initializeEnvironment() {
 // AddPlayer creates a new player at the given
 func (s *Scene) AddPlayer(x float64, y float64, userData game.Player) *box2d.B2Body {
 	player := s.shapesHandler.CreatePlayer(x, y)
+	player.SetUserData(userData)
 	s.Players = append(s.Players, player)
 	return player
 }

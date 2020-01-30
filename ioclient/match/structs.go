@@ -8,3 +8,11 @@ type JoinEvent struct {
 	Game    string        `json:"game"`
 	Players []game.Player `json:"players"`
 }
+
+// MoveEvent is the move IO event structure
+type MoveEvent struct {
+	Action    string `json:"action"`
+	MatchID   string `json:"matchId"`
+	Timestamp string `json:"timestamp"`
+	UserID    string `json:"userId"`
+}
