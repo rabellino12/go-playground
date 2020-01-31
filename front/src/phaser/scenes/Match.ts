@@ -3,54 +3,23 @@ import Phaser from "phaser";
 import Centrifuge from "centrifuge";
 
 import { WSClient } from "../../services/centrifuge";
-import { IMove, MovementIO } from "../../services/movementIO";
+import { IMove, MovementIO, IPlayer } from "../../services/movementIO";
 
 const assetsPrefix = "/game/assets";
-
-interface IPlayer {
-  id: string;
-  position: {
-    x: number;
-    y: number;
-  };
-}
-interface IEnemy extends IPlayer {
-  sprite: Phaser.Physics.Arcade.Sprite;
-}
-
-interface IAction {
-  velocityY?: number;
-  velocityX?: number;
-}
-
-interface IMoves {
-  up: IAction;
-  left: IAction;
-  right: IAction;
-  stop: IAction;
-}
-
-interface IEnemyMove {
-  enemy: IEnemy;
-  action: IAction;
-  dir: "left" | "right" | "up" | "stop";
-}
 
 export class MatchScene extends Phaser.Scene {
   public ground!: planck.Body;
   public player!: planck.Body;
   public platforms: planck.Body[] = [];
   public userId!: string;
-  public enemies: IEnemy[] = [];
   public cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   public wsClient?: WSClient;
   public worldScale!: number;
   public world!: planck.World;
-  public tick: number = 0;
+  private moves!: IMove[];
   private personalSub?: Centrifuge.Subscription;
   private movementService?: MovementIO;
-  private moves!: IMoves;
-  private enemyMoves: IEnemyMove[] = [];
+  private players!: IPlayer[]
 
   constructor() {
     super({
@@ -71,24 +40,6 @@ export class MatchScene extends Phaser.Scene {
     }
     this.wsClient = data.wsClient;
     this.userId = data.userId;
-    this.moves = {
-      left: {
-        velocityX: -260,
-        velocityY: undefined
-      },
-      right: {
-        velocityX: 260,
-        velocityY: undefined
-      },
-      stop: {
-        velocityX: 0,
-        velocityY: undefined
-      },
-      up: {
-        velocityX: undefined,
-        velocityY: -630
-      }
-    };
   }
 
   public preload() {
@@ -147,7 +98,7 @@ export class MatchScene extends Phaser.Scene {
 			// this.movementService.move('right');
 		} else {
       if (vel.x) {
-        force = vel. x * -10
+        force = vel.x * -10
       }
 			player.anims.play('stop', true);
 			// this.movementService.stop();
@@ -178,18 +129,14 @@ export class MatchScene extends Phaser.Scene {
         if (!this.movementService) {
           return;
         }
-        const enemy = this.enemies.find(
+        const enemy = this.players.find(
           en => !!(pub.info && en.id === pub.info.user)
         );
         if (!enemy) {
           return;
         }
         const move: IMove = pub.data;
-        this.enemyMoves.push({
-          action: this.moves[move.action],
-          dir: pub.data.action,
-          enemy
-        });
+        this.moves.push(move);
       });
     }
   };

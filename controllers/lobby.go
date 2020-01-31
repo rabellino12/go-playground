@@ -11,7 +11,7 @@ import (
 	redis "github.com/go-redis/redis/v7"
 	game "github.com/rabellino12/go-playground/db/collections"
 	"github.com/rabellino12/go-playground/helper"
-	"github.com/rabellino12/go-playground/ioclient/match"
+	ioclient "github.com/rabellino12/go-playground/ioclient/match"
 	"github.com/rabellino12/go-playground/iohttp"
 )
 
@@ -57,7 +57,7 @@ func (l *Lobby) RunLoop() {
 		go MakeMatch(l.IO, l.Logger, l.Redis, resGame)
 		for _, p := range playersList {
 			l.Logger.Println("game player: ", p)
-			joinJS, joinErr := json.Marshal(match.JoinEvent{
+			joinJS, joinErr := json.Marshal(ioclient.JoinEvent{
 				Event:   "join",
 				Game:    resGame.ID.Hex(),
 				Players: playersList,

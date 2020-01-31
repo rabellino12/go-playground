@@ -1,4 +1,4 @@
-package match
+package ioclient
 
 import game "github.com/rabellino12/go-playground/db/collections"
 
@@ -9,10 +9,11 @@ type JoinEvent struct {
 	Players []game.Player `json:"players"`
 }
 
-// MoveEvent is the move IO event structure
-type MoveEvent struct {
-	Action    string `json:"action"`
-	MatchID   string `json:"matchId"`
-	Timestamp string `json:"timestamp"`
-	UserID    string `json:"userId"`
+// Move interface
+type Move struct {
+	Action    string        `json:"action"`
+	Timestamp int           `json:"timestamp"`
+	MatchID   string        `json:"matchId"`
+	UserID    string        `json:"userId"`
+	Position  game.Position `json:"position"`
 }

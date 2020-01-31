@@ -1,6 +1,9 @@
 package scenes
 
-import "github.com/ByteArena/box2d"
+import (
+	"github.com/ByteArena/box2d"
+	ioclient "github.com/rabellino12/go-playground/ioclient/match"
+)
 
 // Handler is the shapes handler
 type Handler struct {
@@ -50,4 +53,35 @@ func (h *Handler) CreatePlayer(x float64, y float64) *box2d.B2Body {
 	player.CreateFixture(&shape, 1)
 	player.SetMassData(&box2d.B2MassData{Mass: 1, Center: box2d.B2Vec2{}, I: 1})
 	return player
+}
+
+// MovePlayer handles player movement in some direction
+func (h *Handler) MovePlayer(move ioclient.Move, player *box2d.B2Body) *box2d.B2Body {
+	vel := player.GetLinearVelocity()
+	force := 0.0
+	if move.Action == "up" {
+		h.jump(player)
+	}
+	switch move.Action {
+	case "left":
+		if vel.X > -5 {
+			force = -50
+		}
+	case "right":
+		if vel.X < 5 {
+			force = 50
+		}
+	default:
+		if vel.X != 0 {
+			force = vel.X * -10
+		}
+	}
+	player.ApplyForce(box2d.B2Vec2{X: force, Y: 0}, player.GetWorldCenter(), true)
+	return player
+}
+
+func (h *Handler) jump(player *box2d.B2Body) {
+	f := player.GetWorldVector(box2d.B2Vec2{X: 0, Y: -1})
+	p := player.GetWorldPoint(box2d.B2Vec2{X: 0, Y: 0.1})
+	player.ApplyLinearImpulse(f, p, true)
 }

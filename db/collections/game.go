@@ -22,11 +22,17 @@ type Game struct {
 	ID primitive.ObjectID `bson:"_id, omitempty" json:"_id"`
 }
 
+// Position is a x,y axis point
+type Position struct {
+	X float64 `json:"x" bson:"x"`
+	Y float64 `json:"y" bson:"y"`
+}
+
 // Player is the game player structure, with player id, index and position "x,y"
 type Player struct {
-	Index    int    `bson:"index, omitempty" json:"index"`
-	Position string `bson:"position, omitempty" json:"position"`
-	ID       string `bson:"id, omitempty" json:"id"`
+	Index    int      `bson:"index, omitempty" json:"index"`
+	Position Position `bson:"position" json:"position"`
+	ID       string   `bson:"id, omitempty" json:"id"`
 }
 
 // Handler is the Game collection handler

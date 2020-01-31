@@ -42,7 +42,8 @@ func (h *eventHandler) OnDisconnect(c *centrifuge.Client, e centrifuge.Disconnec
 	log.Println("Disconnected", e.Reason)
 }
 
-func newConnection() *centrifuge.Client {
+// NewConnection creates a new centrifuge pub/sub connection
+func NewConnection() *centrifuge.Client {
 	wsURL := "ws://centrifugo:8081/connection/websocket"
 
 	c := centrifuge.New(wsURL, centrifuge.DefaultConfig())
@@ -68,7 +69,7 @@ func Connect(
 	l *log.Logger,
 ) {
 	l.Println("Start program")
-	c := newConnection()
+	c := NewConnection()
 	defer c.Close()
 	lobby.Initialize(c, r, l, g)
 	l.Println("IO initialized")
