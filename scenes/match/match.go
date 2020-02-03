@@ -2,9 +2,10 @@ package scenes
 
 import (
 	"errors"
+
 	"github.com/ByteArena/box2d"
 	game "github.com/rabellino12/go-playground/db/collections"
-	"github.com/rabellino12/go-playground/ioclient"
+	ioMatch "github.com/rabellino12/go-playground/ioclient/match"
 	"github.com/rabellino12/go-playground/scenes"
 )
 
@@ -37,6 +38,13 @@ func MakeMatch(gameObj game.Game) *WorldScene {
 		shapesHandler: shapesHandler,
 	}
 	matchScene.initializeEnvironment()
+	for _, player := range gameObj.Players {
+		userData := ioMatch.PlayerUserData{
+			Player: player,
+			Action: "stop",
+		}
+		matchScene.AddPlayer(player.Position.X, player.Position.Y, userData)
+	}
 	return &matchScene
 }
 
@@ -50,7 +58,7 @@ func (s *WorldScene) initializeEnvironment() {
 }
 
 // AddPlayer creates a new player at the given
-func (s *WorldScene) AddPlayer(x float64, y float64, userData game.Player) *box2d.B2Body {
+func (s *WorldScene) AddPlayer(x float64, y float64, userData ioMatch.PlayerUserData) *box2d.B2Body {
 	player := s.shapesHandler.CreatePlayer(x, y)
 	player.SetUserData(userData)
 	s.Players[userData.ID] = player
@@ -58,22 +66,36 @@ func (s *WorldScene) AddPlayer(x float64, y float64, userData game.Player) *box2
 }
 
 // AddMove moves a player in the world and returns the new player state
-func (s *WorldScene) AddMove(move match.Move) (*box2d.B2Body, error) {
+func (s *WorldScene) AddMove(move ioMatch.Move) (*box2d.B2Body, error) {
 	player := s.Players[move.UserID]
 	if player == nil {
 		return &box2d.B2Body{}, errors.New("Player not found")
 	}
+	userData := player.GetUserData().(ioMatch.PlayerUserData)
+	userData.Jumping = move.Jumping
+	userData.Action = move.Action
+	player.SetUserData(userData)
 	s.shapesHandler.MovePlayer(move, player)
 	return player, nil
 }
 
 // GetSnapshot returns a world snapshot
-func (s *WorldScene) GetSnapshot() map[string]*match.Move {
-	moves := make([]match.Move, 0)
+func (s *WorldScene) GetSnapshot() map[string][]ioMatch.Move {
+	moves := make(map[string][]ioMatch.Move, 0)
 	for userID, player := range s.Players {
-		moves = append(moves, match.Move{
+		userData := player.GetUserData().(ioMatch.PlayerUserData)
+		position := player.GetPosition()
+		x := position.X
+		y := position.Y
+		moves[userID] = append(moves[userID], ioMatch.Move{
 			UserID: userID,
-			Action: ,
+			Action: userData.Action,
+			Position: game.Position{
+				X: x,
+				Y: y,
+			},
+			Jumping: userData.Jumping,
 		})
 	}
+	return moves
 }

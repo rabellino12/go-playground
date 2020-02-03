@@ -64,6 +64,17 @@ func (m *Match) RunLoop() {
 			m.WorldScene.AddMove(move)
 		}
 	}
+	snapshot := m.WorldScene.GetSnapshot()
+	js, err := json.Marshal(snapshot)
+	if err != nil {
+		m.Logger.Println("error marshaling snapshot to json: ", err.Error())
+		return
+	}
+	err = m.IO.Publish("$"+channel, js)
+	if err != nil {
+		m.Logger.Println("error publishing snapshot: ", err.Error())
+		return
+	}
 
 }
 

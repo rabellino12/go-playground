@@ -37,11 +37,9 @@ func Init(logger *log.Logger) *Client {
 }
 
 //Publish sends a message to the specified channel
-func (io *Client) Publish(ch string, message []byte) {
+func (io *Client) Publish(ch string, message []byte) error {
 	err := io.Client.Publish(io.context, ch, message)
-	if err != nil {
-		log.Fatalf("Error calling publish: %v", err)
-	}
+	return err
 }
 
 // Presence is the method to Get channel's users
