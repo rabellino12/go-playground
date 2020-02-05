@@ -73,36 +73,42 @@ export class MatchScene extends Phaser.Scene {
     this.world.clearForces();
 
     this.cursors = this.input.keyboard.createCursorKeys();
-    if (!this.cursors.left || !this.cursors.right || !this.cursors.up) {
+    if (!this.cursors.left || !this.cursors.right || !this.cursors.up || !this.movementService) {
       return ;
     }
     const player: Phaser.GameObjects.Sprite = this.player.m_userData as Phaser.GameObjects.Sprite;
     const vel = this.player.getLinearVelocity();
     var force = 0;
+    const move = {
+      action: 'stop',
+      jumping: false
+    };
     if (this.cursors.up.isDown && this.playerTouchingFloor()) {
 			const f = this.player.getWorldVector(planck.Vec2(0.0, -1));
       const p = this.player.getWorldPoint(planck.Vec2(0.0, 0.1));
       this.player.applyLinearImpulse(f, p, true);
+      move.jumping = true;
 		}
 		if (this.cursors && this.cursors.left.isDown) {
       if (vel.x > -5) {
         force = -50;
       }
-			player.anims.play('left', true);
-			// this.movementService.move('left');
+      player.anims.play('left', true);
+      move.action = 'left';
 		} else if (this.cursors && this.cursors.right.isDown) {
       if (vel.x < 5) {
         force = 50;
       }
-			player.anims.play('right', true);
-			// this.movementService.move('right');
+      player.anims.play('right', true);
+      move.action = 'right';
 		} else {
       if (vel.x) {
         force = vel.x * -10
       }
-			player.anims.play('stop', true);
-			// this.movementService.stop();
+      player.anims.play('stop', true);
+      move.action = 'stop';
     }
+    this.movementService.move(move.action);
     this.player.applyForce(planck.Vec2(force, 0), this.player.getWorldCenter(), true)
 
     for (let b = this.world.getBodyList(); b; b = b.getNext()){

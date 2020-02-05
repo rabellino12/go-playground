@@ -12,10 +12,11 @@ export interface IPlayer {
 }
 export interface IMove {
   userId: IPlayer["id"];
-  action: "left" | "right" | "stop" | "up";
+  action: "left" | "right" | "stop";
   position: IPosition;
   matchId: string;
   timestamp: number;
+  jumping?: boolean;
 }
 export interface IParams {
   c: WSClient;
@@ -30,7 +31,7 @@ export class MovementIO {
   private c: WSClient;
   private userId: string;
   private match: string;
-  private lastMove?: string;
+  private lastMove?: IMove;
 
   constructor(params: IParams) {
     this.c = params.c;
@@ -40,21 +41,22 @@ export class MovementIO {
     this.initializeEvents();
   }
 
-  public move = (action: "up" | "left" | "right" | "stop", position: IPosition) => {
+  public move = (action: "left" | "right" | "stop", position: IPosition, jumping?: boolean) => {
     const message: IMove = {
       action,
       matchId: this.match,
       timestamp: this.getTime(),
       userId: this.userId,
-      position
+      position,
+      jumping
     };
-    if (this.lastMove !== action) {
+    if (this.lastMove?.action !== action || this.lastMove?.jumping !== jumping) {
       this.matchSubscription.publish(message);
-      this.lastMove = action;
+      this.lastMove = message;
     }
   };
 
-  public stop = (position: IPosition) => {
+  public stop = (position: IPosition, jumping?: boolean) => {
     const message: IMove = {
       action: "stop",
       matchId: this.match,
@@ -62,9 +64,9 @@ export class MovementIO {
       userId: this.userId,
       position
     };
-    if (this.lastMove !== "stop") {
+    if (this.lastMove?.action !== "stop" && this.lastMove?.jumping !== jumping) {
       this.matchSubscription.publish(message);
-      this.lastMove = "stop";
+      this.lastMove = message;
     }
   };
 

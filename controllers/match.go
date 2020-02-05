@@ -47,22 +47,9 @@ func (m *Match) GetID() string {
 
 // RunLoop method acts as init for match loop handler
 func (m *Match) RunLoop() {
-	channel := "match:" + m.ID
-	messagesQuery := m.Redis.LRange(channel, 0, -1)
-	messages, err := messagesQuery.Result()
-	if err != nil {
-		m.Logger.Println("error getting game history: ", err.Error())
-		return
-	}
-	m.Redis.Del(channel)
-	var move matchIO.Move
-	for _, message := range messages {
-		err := json.Unmarshal([]byte(message), &move)
-		if err != nil {
-			m.Logger.Println("error getting game history: ", err.Error())
-		} else {
-			m.WorldScene.AddMove(move)
-		}
+	channel := "$match:" + m.ID
+	for _, move := range m.Moves {
+		m.WorldScene.AddMove(move)
 	}
 	snapshot := m.WorldScene.GetSnapshot()
 	js, err := json.Marshal(snapshot)
@@ -70,7 +57,7 @@ func (m *Match) RunLoop() {
 		m.Logger.Println("error marshaling snapshot to json: ", err.Error())
 		return
 	}
-	err = m.IO.Publish("$"+channel, js)
+	err = m.IO.Publish(channel, js)
 	if err != nil {
 		m.Logger.Println("error publishing snapshot: ", err.Error())
 		return
@@ -80,5 +67,11 @@ func (m *Match) RunLoop() {
 
 // OnPublish handles centrifuge subscription publish
 func (m *Match) OnPublish(sub *centrifuge.Subscription, e centrifuge.PublishEvent) {
-
+	var move matchIO.Move
+	err := json.Unmarshal(e.Data, &move)
+	if err != nil {
+		m.Logger.Println("error marshaling match message: ", err.Error())
+		return
+	}
+	m.Moves = append(m.Moves, move)
 }
