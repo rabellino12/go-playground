@@ -1,7 +1,7 @@
 package ioclient
 
 import (
-	"errors"
+	"fmt"
 
 	centrifuge "github.com/centrifugal/centrifuge-go"
 )
@@ -13,14 +13,14 @@ type Handler interface {
 }
 
 // ListenMatch lobby io controller
-func ListenMatch(c *centrifuge.Client, matchHandler Handler) error {
+func ListenMatch(c *centrifuge.Client, matchHandler Handler) {
 	id := matchHandler.GetID()
-	sub, err := c.NewSubscription("$match:" + id)
-	if err != nil {
-		return errors.New("couldn't subscribe to " + id)
-	}
-
+	fmt.Println("Listening to match " + id)
+	sub, _ := c.NewSubscription("$match:" + id)
 	sub.OnPublish(matchHandler)
-	sub.Subscribe()
-	return nil
+	err := sub.Subscribe()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	select {}
 }

@@ -9,7 +9,7 @@ import (
 type Handler struct {
 	quit       chan struct{}
 	ticker     *time.Ticker
-	controller Controller
+	Controller Controller
 }
 
 // Initialize starts the loop and creates the quit chanel
@@ -25,7 +25,7 @@ func (h *Handler) loop() {
 	for {
 		select {
 		case <-h.ticker.C:
-			h.controller.RunLoop()
+			h.Controller.RunLoop()
 		case <-h.quit:
 			fmt.Println("ticker stopped")
 			return

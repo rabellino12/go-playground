@@ -48,7 +48,6 @@ func NewConnection() *centrifuge.Client {
 
 	c := centrifuge.New(wsURL, centrifuge.DefaultConfig())
 	c.SetToken(connToken("112", 0))
-
 	handler := &eventHandler{}
 	c.OnPrivateSub(handler)
 	c.OnDisconnect(handler)

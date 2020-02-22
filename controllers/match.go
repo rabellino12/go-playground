@@ -22,6 +22,7 @@ type Match struct {
 	ID         string
 	WorldScene *scenes.WorldScene
 	Moves      []matchIO.Move
+	DoneMoves  []matchIO.Move
 }
 
 // MakeMatch starts a new match instance with its own loop, intended to be used on its own goroutine
@@ -32,11 +33,29 @@ func MakeMatch(io *iohttp.Client, logger *log.Logger, redis *redis.Client, gameO
 		Logger:     logger,
 		Redis:      redis,
 		WorldScene: worldScene,
+		ID:         gameObj.ID.Hex(),
 	}
+	logger.Println("started match: " + matchHandler.ID)
+	loop.Initialize(matchHandler, 60)
+	logger.Println("after loop, match: " + matchHandler.ID)
 	c := ioclient.NewConnection()
 	defer c.Close()
-	go matchIO.ListenMatch(c, matchHandler)
-	go loop.Initialize(matchHandler, 60)
+	logger.Println("after connection, match: " + matchHandler.ID)
+	sub, er := c.NewSubscription("$match:" + gameObj.ID.Hex())
+	logger.Println("after subscription to channel: ", sub.Channel())
+	if er != nil {
+		logger.Println(er.Error())
+	}
+	sub.OnPublish(matchHandler)
+	sub.OnSubscribeSuccess(matchHandler)
+	sub.OnSubscribeError(matchHandler)
+	sub.OnUnsubscribe(matchHandler)
+	sub.OnJoin(matchHandler)
+	err := sub.Subscribe()
+	if err != nil {
+		logger.Println(err.Error())
+	}
+	logger.Println("after subscribe, match: " + matchHandler.ID)
 	select {}
 }
 
@@ -47,10 +66,18 @@ func (m *Match) GetID() string {
 
 // RunLoop method acts as init for match loop handler
 func (m *Match) RunLoop() {
-	channel := "$match:" + m.ID
-	for _, move := range m.Moves {
-		m.WorldScene.AddMove(move)
+	channel := "$snapshot:" + m.ID
+	m.Logger.Println("loop running on match: " + m.ID)
+	if len(m.Moves) == 0 {
+		return
 	}
+	for i, move := range m.Moves {
+		m.Logger.Println("im adding a move")
+		m.WorldScene.AddMove(move)
+		m.DoneMoves = append(m.DoneMoves, move)
+		m.Moves = m.Moves[i+1:]
+	}
+	m.Logger.Println("running loop, after moves: ", m.Moves)
 	snapshot := m.WorldScene.GetSnapshot()
 	js, err := json.Marshal(snapshot)
 	if err != nil {
@@ -67,6 +94,7 @@ func (m *Match) RunLoop() {
 
 // OnPublish handles centrifuge subscription publish
 func (m *Match) OnPublish(sub *centrifuge.Subscription, e centrifuge.PublishEvent) {
+	m.Logger.Println("Received message on match: " + m.ID)
 	var move matchIO.Move
 	err := json.Unmarshal(e.Data, &move)
 	if err != nil {
@@ -74,4 +102,20 @@ func (m *Match) OnPublish(sub *centrifuge.Subscription, e centrifuge.PublishEven
 		return
 	}
 	m.Moves = append(m.Moves, move)
+}
+
+func (m *Match) OnSubscribeSuccess(sub *centrifuge.Subscription, e centrifuge.SubscribeSuccessEvent) {
+	m.Logger.Printf("Successfully subscribed to channel %s", sub.Channel())
+}
+
+func (m *Match) OnJoin(sub *centrifuge.Subscription, e centrifuge.JoinEvent) {
+	m.Logger.Println("New match join")
+}
+
+func (m *Match) OnSubscribeError(sub *centrifuge.Subscription, e centrifuge.SubscribeErrorEvent) {
+	m.Logger.Printf("Error subscribing to channel %s: %v", sub.Channel(), e.Error)
+}
+
+func (m *Match) OnUnsubscribe(sub *centrifuge.Subscription, e centrifuge.UnsubscribeEvent) {
+	m.Logger.Printf("Unsubscribed from channel %s", sub.Channel())
 }

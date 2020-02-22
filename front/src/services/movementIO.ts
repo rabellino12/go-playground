@@ -10,13 +10,16 @@ export interface IPlayer {
   id: string;
   position: IPosition;
 }
-export interface IMove {
-  userId: IPlayer["id"];
+
+export interface IMoveInput {
   action: "left" | "right" | "stop";
   position: IPosition;
-  matchId: string;
-  timestamp: number;
   jumping?: boolean;
+}
+
+export interface IMove extends IMoveInput {
+  userId: IPlayer["id"];
+  timestamp: number;
 }
 export interface IParams {
   c: WSClient;
@@ -25,48 +28,38 @@ export interface IParams {
 }
 
 export class MovementIO {
-  public movements$!: Observable<Centrifuge.PublicationContext>;
+  public snapshot$!: Observable<Centrifuge.PublicationContext>;
   public enemies$!: Observable<Array<string | undefined>>;
   public matchSubscription: Centrifuge.Subscription;
+  public snapshotSubscription: Centrifuge.Subscription;
   private c: WSClient;
   private userId: string;
-  private match: string;
+  private matchChannel: string;
+  private snapshotChannel: string;
   private lastMove?: IMove;
 
   constructor(params: IParams) {
     this.c = params.c;
     this.userId = params.userId;
-    this.match = `$match:${params.matchId}`;
-    this.matchSubscription = this.c.cent.subscribe(this.match);
+    this.matchChannel = `$match:${params.matchId}`;
+    this.snapshotChannel = `$snapshot:${params.matchId}`;
+    this.matchSubscription = this.c.cent.subscribe(this.matchChannel);
+    this.snapshotSubscription = this.c.cent.subscribe(this.snapshotChannel);
     this.initializeEvents();
   }
 
-  public move = (action: "left" | "right" | "stop", position: IPosition, jumping?: boolean) => {
+  public move = (move: IMoveInput) => {
     const message: IMove = {
-      action,
-      matchId: this.match,
+      ...move,
       timestamp: this.getTime(),
-      userId: this.userId,
-      position,
-      jumping
+      userId: this.userId
     };
-    if (this.lastMove?.action !== action || this.lastMove?.jumping !== jumping) {
-      this.matchSubscription.publish(message);
-      this.lastMove = message;
-    }
-  };
-
-  public stop = (position: IPosition, jumping?: boolean) => {
-    const message: IMove = {
-      action: "stop",
-      matchId: this.match,
-      timestamp: this.getTime(),
-      userId: this.userId,
-      position
-    };
-    if (this.lastMove?.action !== "stop" && this.lastMove?.jumping !== jumping) {
-      this.matchSubscription.publish(message);
-      this.lastMove = message;
+    if (this.lastMove?.action !== move.action || this.lastMove?.jumping !== move.jumping) {
+      return this.matchSubscription.publish(JSON.stringify(message))
+        .then((res) => {
+          this.lastMove = message;
+        })
+        .catch(console.log);
     }
   };
 
@@ -75,8 +68,11 @@ export class MovementIO {
   }
 
   private initializeEvents = () => {
-    this.movements$ = new Observable<Centrifuge.PublicationContext>(sub => {
-      this.matchSubscription.on(
+    this.snapshotSubscription.on('error', console.log);
+    this.snapshotSubscription.on('unsubscribe', console.log);
+    this.snapshotSubscription.on('subscribe', console.log);
+    this.snapshot$ = new Observable<Centrifuge.PublicationContext>(sub => {
+      this.snapshotSubscription.on(
         "publish",
         (e: Centrifuge.PublicationContext) => {
           sub.next(e);

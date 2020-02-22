@@ -26,6 +26,11 @@
       "join_leave": true,
       "presence": true,
       "history_recover": true
+    },
+    {
+      "name": "snapshot",
+      "publish": true,
+      "history_recover": true
     }
   ]
 }
