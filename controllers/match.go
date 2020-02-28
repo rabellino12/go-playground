@@ -68,6 +68,7 @@ func (m *Match) GetID() string {
 func (m *Match) RunLoop() {
 	channel := "$snapshot:" + m.ID
 	if len(m.Moves) == 0 {
+		m.Logger.Println("no moves found")
 		return
 	}
 	for i, move := range m.Moves {
@@ -107,18 +108,22 @@ func (m *Match) removeMove(i int) []matchIO.Move {
 	return m.Moves[:len(m.Moves)-1]
 }
 
+// OnSubscribeSuccess method handles the subscribe event for the match channel
 func (m *Match) OnSubscribeSuccess(sub *centrifuge.Subscription, e centrifuge.SubscribeSuccessEvent) {
 	m.Logger.Printf("Successfully subscribed to channel %s", sub.Channel())
 }
 
+// OnJoin method handles the join event for the match channel
 func (m *Match) OnJoin(sub *centrifuge.Subscription, e centrifuge.JoinEvent) {
 	m.Logger.Println("New match join")
 }
 
+// OnSubscribeError method handles the subscribe error event for the match channel
 func (m *Match) OnSubscribeError(sub *centrifuge.Subscription, e centrifuge.SubscribeErrorEvent) {
 	m.Logger.Printf("Error subscribing to channel %s: %v", sub.Channel(), e.Error)
 }
 
+// OnUnsubscribe method handles the unsubscribe event for the match channel
 func (m *Match) OnUnsubscribe(sub *centrifuge.Subscription, e centrifuge.UnsubscribeEvent) {
 	m.Logger.Printf("Unsubscribed from channel %s", sub.Channel())
 }
