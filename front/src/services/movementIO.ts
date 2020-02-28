@@ -55,7 +55,7 @@ export class MovementIO {
       userId: this.userId
     };
     if (this.lastMove?.action !== move.action || this.lastMove?.jumping !== move.jumping) {
-      return this.matchSubscription.publish(JSON.stringify(message))
+      return this.matchSubscription.publish(message)
         .then((res) => {
           this.lastMove = message;
         })

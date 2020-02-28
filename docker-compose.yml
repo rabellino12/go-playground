@@ -24,6 +24,8 @@ services:
       - "27017:27017"
   redis:
     image: "redis:alpine"
+    ports:
+      - "6379:6379"
   centrifugo:
     build: ./centrifugo
     ports:

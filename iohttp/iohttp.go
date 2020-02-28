@@ -6,7 +6,10 @@ import (
 
 	"github.com/centrifugal/gocent"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/rabellino12/go-playground/helper"
 )
+
+var centrifugoURL = helper.GoDotEnvVariable("CENTRIFUGO_PRIVATE_URL")
 
 // Client is a handler for IO actions
 type Client struct {
@@ -27,7 +30,7 @@ type CentrifugeAuthCustomClaims struct {
 func Init(logger *log.Logger) *Client {
 
 	c := gocent.New(gocent.Config{
-		Addr: "http://centrifugo:9000",
+		Addr: centrifugoURL,
 		Key:  "some-centrifugo-api-key",
 	})
 

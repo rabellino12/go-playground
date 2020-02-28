@@ -14,6 +14,7 @@ require (
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/go-cmp v0.4.0 // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
+	github.com/joho/godotenv v1.3.0
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/stretchr/testify v1.4.0 // indirect
 	github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c // indirect

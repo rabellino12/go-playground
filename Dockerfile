@@ -18,6 +18,7 @@ USER mathias
 
 WORKDIR /
 COPY --from=build-env /gophercon/tutorial /
+COPY --from=build-env /gophercon /
 
 EXPOSE 8080
 

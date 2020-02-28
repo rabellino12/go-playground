@@ -151,6 +151,7 @@ export class MatchScene extends Phaser.Scene {
         matchId: data.game,
         userId: this.userId
       });
+      this.players = data.players as IPlayer[];
       this.movementService.matchSubscription.on('publish', (e) => {
         console.log(e);
       })

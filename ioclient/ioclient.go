@@ -8,8 +8,9 @@ import (
 	"github.com/centrifugal/gocent"
 	"github.com/go-redis/redis/v7"
 	"github.com/rabellino12/go-playground/helper"
-	"github.com/rabellino12/go-playground/ioclient/lobby"
 )
+
+var centrifugoWS = helper.GoDotEnvVariable("CENTRIFUGO_WS")
 
 func connToken(user string, exp int64) string {
 	t, err := helper.GetJWT(user)
@@ -44,7 +45,7 @@ func (h *eventHandler) OnDisconnect(c *centrifuge.Client, e centrifuge.Disconnec
 
 // NewConnection creates a new centrifuge pub/sub connection
 func NewConnection() *centrifuge.Client {
-	wsURL := "ws://centrifugo:8081/connection/websocket"
+	wsURL := centrifugoWS + "/connection/websocket"
 
 	c := centrifuge.New(wsURL, centrifuge.DefaultConfig())
 	c.SetToken(connToken("112", 0))
@@ -70,7 +71,7 @@ func Connect(
 	l.Println("Start program")
 	c := NewConnection()
 	defer c.Close()
-	lobby.Initialize(c, r, l, g)
+	// lobby.Initialize(c, r, l, g)
 	l.Println("IO initialized")
 	select {}
 }

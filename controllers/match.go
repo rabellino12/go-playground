@@ -67,7 +67,6 @@ func (m *Match) GetID() string {
 // RunLoop method acts as init for match loop handler
 func (m *Match) RunLoop() {
 	channel := "$snapshot:" + m.ID
-	m.Logger.Println("loop running on match: " + m.ID)
 	if len(m.Moves) == 0 {
 		return
 	}
@@ -75,9 +74,8 @@ func (m *Match) RunLoop() {
 		m.Logger.Println("im adding a move")
 		m.WorldScene.AddMove(move)
 		m.DoneMoves = append(m.DoneMoves, move)
-		m.Moves = m.Moves[i+1:]
+		m.removeMove(i)
 	}
-	m.Logger.Println("running loop, after moves: ", m.Moves)
 	snapshot := m.WorldScene.GetSnapshot()
 	js, err := json.Marshal(snapshot)
 	if err != nil {
@@ -102,6 +100,11 @@ func (m *Match) OnPublish(sub *centrifuge.Subscription, e centrifuge.PublishEven
 		return
 	}
 	m.Moves = append(m.Moves, move)
+}
+
+func (m *Match) removeMove(i int) []matchIO.Move {
+	m.Moves[len(m.Moves)-1], m.Moves[i] = m.Moves[i], m.Moves[len(m.Moves)-1]
+	return m.Moves[:len(m.Moves)-1]
 }
 
 func (m *Match) OnSubscribeSuccess(sub *centrifuge.Subscription, e centrifuge.SubscribeSuccessEvent) {
