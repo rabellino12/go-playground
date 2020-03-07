@@ -24,7 +24,7 @@ type Lobby struct {
 }
 
 // RunLoop method acts as init for lobby loop handler
-func (l *Lobby) RunLoop() {
+func (l *Lobby) RunLoop(elapsed int64) {
 	users, err := l.IO.Presence("$lobby:index")
 	var players []gocent.ClientInfo
 	for _, user := range users {

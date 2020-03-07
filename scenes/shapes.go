@@ -56,7 +56,7 @@ func (h *Handler) CreatePlayer(x float64, y float64) *box2d.B2Body {
 }
 
 // MovePlayer handles player movement in some direction
-func (h *Handler) MovePlayer(move ioclient.Move, player *box2d.B2Body) *box2d.B2Body {
+func (h *Handler) MovePlayer(move ioclient.Move, player *box2d.B2Body, elapsed int64) *box2d.B2Body {
 	vel := player.GetLinearVelocity()
 	force := 0.0
 	if move.Action == "up" {
@@ -64,15 +64,15 @@ func (h *Handler) MovePlayer(move ioclient.Move, player *box2d.B2Body) *box2d.B2
 	}
 	switch move.Action {
 	case "left":
-		if vel.X > -5 {
+		if (vel.X * float64(elapsed)) > -5 {
 			force = -50
 		}
 	case "right":
-		if vel.X < 5 {
+		if (vel.X * float64(elapsed)) < 5 {
 			force = 50
 		}
 	default:
-		if vel.X != 0 {
+		if (vel.X * float64(elapsed)) != 0 {
 			force = vel.X * -10
 		}
 	}

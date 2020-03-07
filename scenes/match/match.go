@@ -66,7 +66,7 @@ func (s *WorldScene) AddPlayer(x float64, y float64, userData ioMatch.PlayerUser
 }
 
 // AddMove moves a player in the world and returns the new player state
-func (s *WorldScene) AddMove(move ioMatch.Move) (*box2d.B2Body, error) {
+func (s *WorldScene) AddMove(move ioMatch.Move, elapsed int64) (*box2d.B2Body, error) {
 	player := s.Players[move.UserID]
 	if player == nil {
 		return &box2d.B2Body{}, errors.New("Player not found")
@@ -75,7 +75,7 @@ func (s *WorldScene) AddMove(move ioMatch.Move) (*box2d.B2Body, error) {
 	userData.Jumping = move.Jumping
 	userData.Action = move.Action
 	player.SetUserData(userData)
-	s.shapesHandler.MovePlayer(move, player)
+	s.shapesHandler.MovePlayer(move, player, elapsed)
 	return player, nil
 }
 

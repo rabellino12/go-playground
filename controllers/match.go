@@ -65,15 +65,17 @@ func (m *Match) GetID() string {
 }
 
 // RunLoop method acts as init for match loop handler
-func (m *Match) RunLoop() {
+func (m *Match) RunLoop(elapsed int64) {
 	channel := "$snapshot:" + m.ID
+	m.WorldScene.World.Step(1/30, 8, 3)
+	m.WorldScene.World.ClearForces()
 	if len(m.Moves) == 0 {
 		m.Logger.Println("no moves found")
 		return
 	}
 	for i, move := range m.Moves {
 		m.Logger.Println("im adding a move")
-		m.WorldScene.AddMove(move)
+		m.WorldScene.AddMove(move, elapsed)
 		m.DoneMoves = append(m.DoneMoves, move)
 		m.removeMove(i)
 	}
