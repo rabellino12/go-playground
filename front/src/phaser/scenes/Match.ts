@@ -59,17 +59,10 @@ export class MatchScene extends Phaser.Scene {
   }
 
   public create() {
-    // this.add.image(400, 300, "sky");
-    // this.add.image(400, 300, "star");
-    // this.platforms = this.physics.add.staticGroup();
-    // this.platforms.create(undefined, undefined, "ground");
-    // this.platforms.create(50, 250, "ground");
-    // this.platforms.create(750, 220, "ground");
     this.worldScale = 30;
     let gravity = planck.Vec2(0, 5);
     this.world = planck.World(gravity);
     this.createEnvironment();
-    // this.player = this.createPlayer(100, 450);
     this.setAnimations();
   }
 
