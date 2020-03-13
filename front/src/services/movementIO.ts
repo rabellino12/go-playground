@@ -9,6 +9,7 @@ export interface IPosition {
 export interface IPlayer {
   id: string;
   position: IPosition;
+  body?: planck.Body
 }
 
 export interface IMoveInput {

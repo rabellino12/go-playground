@@ -69,7 +69,7 @@ export class MatchScene extends Phaser.Scene {
     let gravity = planck.Vec2(0, 5);
     this.world = planck.World(gravity);
     this.createEnvironment();
-    this.player = this.createPlayer(100, 450);
+    // this.player = this.createPlayer(100, 450);
     this.setAnimations();
   }
 
@@ -97,50 +97,56 @@ export class MatchScene extends Phaser.Scene {
     ) {
       return;
     }
-    const player: Phaser.GameObjects.Sprite = this.player
-      .m_userData as Phaser.GameObjects.Sprite;
-    const vel = this.player.getLinearVelocity();
-    const { x, y } = this.player.getPosition();
-    var force = 0;
-    const move: IMoveInput = {
-      position: {
-        x,
-        y
-      },
-      action: "stop",
-      jumping: false
-    };
-    if (this.cursors.up.isDown && this.playerTouchingFloor()) {
-      const f = this.player.getWorldVector(planck.Vec2(0.0, -1));
-      const p = this.player.getWorldPoint(planck.Vec2(0.0, 0.1));
-      this.player.applyLinearImpulse(f, p, true);
-      move.jumping = true;
-    }
-    if (this.cursors && this.cursors.left.isDown) {
-      if (vel.x > -5) {
-        force = -50;
+    this.players.forEach(p => {
+      if (p.id === this.userId) {
+        if (!p.body) {
+          return;
+        }
+        const player: Phaser.GameObjects.Sprite = p.body.m_userData as Phaser.GameObjects.Sprite;
+        const vel = p.body.getLinearVelocity();
+        const { x, y } = p.body.getPosition();
+        var force = 0;
+        const move: IMoveInput = {
+          position: {
+            x,
+            y
+          },
+          action: "stop",
+          jumping: false
+        };
+        if (this.cursors.up?.isDown && this.playerTouchingFloor(p.body)) {
+          const f = p.body.getWorldVector(planck.Vec2(0.0, -1));
+          const point = p.body.getWorldPoint(planck.Vec2(0.0, 0.1));
+          p.body.applyLinearImpulse(f, point, true);
+          move.jumping = true;
+        }
+        if (this.cursors && this.cursors.left?.isDown) {
+          if (vel.x > -5) {
+            force = -50;
+          }
+          player.anims.play("left", true);
+          move.action = "left";
+        } else if (this.cursors && this.cursors.right?.isDown) {
+          if (vel.x < 5) {
+            force = 50;
+          }
+          player.anims.play("right", true);
+          move.action = "right";
+        } else {
+          if (vel.x) {
+            force = vel.x * -10;
+          }
+          player.anims.play("stop", true);
+          move.action = "stop";
+        }
+        this.movementService?.move(move);
+        p.body.applyForce(
+          planck.Vec2(force, 0),
+          p.body.getWorldCenter(),
+          true
+        );
       }
-      player.anims.play("left", true);
-      move.action = "left";
-    } else if (this.cursors && this.cursors.right.isDown) {
-      if (vel.x < 5) {
-        force = 50;
-      }
-      player.anims.play("right", true);
-      move.action = "right";
-    } else {
-      if (vel.x) {
-        force = vel.x * -10;
-      }
-      player.anims.play("stop", true);
-      move.action = "stop";
-    }
-    this.movementService.move(move);
-    this.player.applyForce(
-      planck.Vec2(force, 0),
-      this.player.getWorldCenter(),
-      true
-    );
+    });
   }
 
   public handlePersonalPublish = ({ data }: any) => {
@@ -152,9 +158,12 @@ export class MatchScene extends Phaser.Scene {
         userId: this.userId
       });
       this.players = data.players as IPlayer[];
-      this.movementService.matchSubscription.on('publish', (e) => {
+      this.players.forEach((p, i) => {
+        this.players[i].body = this.createPlayer(p.position.x, p.position.y);
+      });
+      this.movementService.matchSubscription.on("publish", e => {
         console.log(e);
-      })
+      });
       this.movementService.snapshot$.subscribe(pub => {
         console.log(pub);
         if (!this.movementService) {
@@ -172,7 +181,7 @@ export class MatchScene extends Phaser.Scene {
     }
   };
 
-  private playerTouchingFloor = (): boolean => {
+  private playerTouchingFloor = (playerBody: planck.Body): boolean => {
     const contact = this.world.getContactList();
     const list = [contact?.getFixtureA(), contact?.getFixtureB()].filter(
       c => !!c
@@ -181,7 +190,7 @@ export class MatchScene extends Phaser.Scene {
       return false;
     }
     const player = list.find(
-      fixture => fixture === this.player.getFixtureList()
+      fixture => fixture === playerBody.getFixtureList()
     );
     const platform = list.find(
       fixture =>

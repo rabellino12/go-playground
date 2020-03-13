@@ -107,7 +107,8 @@ func (m *Match) OnPublish(sub *centrifuge.Subscription, e centrifuge.PublishEven
 
 func (m *Match) removeMove(i int) []matchIO.Move {
 	m.Moves[len(m.Moves)-1], m.Moves[i] = m.Moves[i], m.Moves[len(m.Moves)-1]
-	return m.Moves[:len(m.Moves)-1]
+	m.Moves = m.Moves[:len(m.Moves)-1]
+	return m.Moves
 }
 
 // OnSubscribeSuccess method handles the subscribe event for the match channel

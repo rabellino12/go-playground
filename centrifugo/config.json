@@ -4,6 +4,7 @@
   "address": "0.0.0.0",
   "port": "8081",
   "internal_port": "9000",
+  "log_level": "debug",
   "engine": "redis",
   "redis_host": "redis",
   "admin": true,
